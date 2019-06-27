@@ -16,8 +16,8 @@ import (
 )
 
 const (
-	WhereAdverb = "WHERE "
-	HavingVerb  = "HAVING "
+	whereAdverb = "WHERE "
+	havingVerb  = "HAVING "
 )
 
 // Expression is an element in a WHERE clause. Expressions consist of simple conditions or
@@ -33,14 +33,14 @@ type Expression interface {
 // these need to be passed through the relevant quote ReplacePlaceholders processing.
 // A quoter may optionally be supplied, otherwise the Default Quoter is used.
 func Where(wh Expression, q ...quote.Quoter) (string, []interface{}) {
-	return build(WhereAdverb, wh, q...)
+	return build(whereAdverb, wh, q...)
 }
 
 // Having constructs the sql clause beginning "HAVING ...". It will contain '?' style placeholders;
 // these need to be passed through the relevant quote ReplacePlaceholders processing.
 // A quoter may optionally be supplied, otherwise the Default Quoter is used.
 func Having(wh Expression, q ...quote.Quoter) (string, []interface{}) {
-	return build(HavingVerb, wh, q...)
+	return build(havingVerb, wh, q...)
 }
 
 // build constructs the sql clause beginning with some verb/adverb. It will contain '?' style placeholders;
