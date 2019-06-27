@@ -6,10 +6,10 @@
 [![Issues](https://img.shields.io/github/issues/rickb777/where.svg)](https://github.com/rickb777/where/issues)
 
 * Provides a fluent API for dynamically constructing SQL 'where' clauses.
-* Also supports dynamic `LIMIT`, `OFFSET` and `ORDERBY` clauses. 
+* Also supports dynamic `LIMIT`, `OFFSET` and `ORDER BY` clauses. 
 * Allows the identifiers to be quoted to suit different SQL dialects, or not at all.
 * `dialect` package supports different placeholder styles.
-* `quote` package supports 
+* `quote` package supports quoting SQL identifiers in back-ticks, double quotes, or nothing.
 
 ## Install
 
