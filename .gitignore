@@ -1,0 +1,7 @@
+*.out
+*.sqlite
+*.txt
+_docs
+.idea/workspace.xml
+reports/
+vendor/
