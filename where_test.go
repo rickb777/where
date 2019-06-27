@@ -5,6 +5,8 @@ import (
 	"github.com/benmoss/matchers"
 	. "github.com/onsi/gomega"
 	"github.com/rickb777/where"
+	"github.com/rickb777/where/dialect"
+	"github.com/rickb777/where/quote"
 	"strconv"
 	"testing"
 )
@@ -320,4 +322,38 @@ func TestQueryConstraint(t *testing.T) {
 
 		g.Expect(sql).To(Equal(c.expPostgres), strconv.Itoa(i))
 	}
+}
+
+func ExampleWhere() {
+	// in this example, identifiers will be unquoted
+	quote.DefaultQuoter = quote.NoQuoter
+
+	// some simple expressions
+	nameEqJohn := where.Eq("name", "John")
+	nameEqPeter := where.Eq("name", "Peter")
+	ageGt10 := where.Gt("age", 10)
+	likes := where.In("likes", "cats", "dogs")
+
+	// build a compound expression - this is a static expression
+	// but it could be based on conditions instead
+	wh := where.And(where.Or(nameEqJohn, nameEqPeter), ageGt10, likes)
+	expr, args := where.Where(wh)
+
+	// For Postgres, the placeholders have to be altered. It's necessary to do
+	// this on the whole query if there might be other placeholders in it too.
+	expr = dialect.ReplacePlaceholdersWithNumbers(expr)
+	fmt.Println(expr)
+	fmt.Println(args)
+
+	// Output: WHERE ((name=$1) OR (name=$2)) AND (age>$3) AND (likes IN ($4,$5))
+	// [John Peter 10 cats dogs]
+}
+
+func ExampleOrderBy() {
+	qc := where.OrderBy("foo", "bar").Desc().Limit(10).Offset(20)
+
+	// The quoter is specified explicitly here, instead of relying on the default.
+	s := qc.Build(quote.AnsiQuoter)
+	fmt.Println(s)
+	// Output: ORDER BY "foo", "bar" DESC LIMIT 10 OFFSET 20
 }

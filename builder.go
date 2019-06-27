@@ -19,46 +19,76 @@ func NotNull(column string) Expression {
 }
 
 // Eq returns an equality condition on a column.
+//
+// A '?' placeholder is used so it may be necessary to replace placeholders in the
+// resulting query, e.g using 'dialect.ReplacePlaceholdersWithNumbers(query)'.
 func Eq(column string, value interface{}) Expression {
 	return Condition{column, "=?", []interface{}{value}}
 }
 
 // NotEq returns a not equal condition on a column.
+//
+// A '?' placeholder is used so it may be necessary to replace placeholders in the
+// resulting query, e.g using 'dialect.ReplacePlaceholdersWithNumbers(query)'.
 func NotEq(column string, value interface{}) Expression {
 	return Condition{column, "<>?", []interface{}{value}}
 }
 
 // Gt returns a greater than condition on a column.
+//
+// A '?' placeholder is used so it may be necessary to replace placeholders in the
+// resulting query, e.g using 'dialect.ReplacePlaceholdersWithNumbers(query)'.
 func Gt(column string, value interface{}) Expression {
 	return Condition{column, ">?", []interface{}{value}}
 }
 
 // GtEq returns a greater than or equal condition on a column.
+//
+// A '?' placeholder is used so it may be necessary to replace placeholders in the
+// resulting query, e.g using 'dialect.ReplacePlaceholdersWithNumbers(query)'.
 func GtEq(column string, value interface{}) Expression {
 	return Condition{column, ">=?", []interface{}{value}}
 }
 
 // Lt returns a less than condition on a column.
+//
+// A '?' placeholder is used so it may be necessary to replace placeholders in the
+// resulting query, e.g using 'dialect.ReplacePlaceholdersWithNumbers(query)'.
 func Lt(column string, value interface{}) Expression {
 	return Condition{column, "<?", []interface{}{value}}
 }
 
 // LtEq returns a less than or equal than condition on a column.
+//
+// A '?' placeholder is used so it may be necessary to replace placeholders in the
+// resulting query, e.g using 'dialect.ReplacePlaceholdersWithNumbers(query)'.
 func LtEq(column string, value interface{}) Expression {
 	return Condition{column, "<=?", []interface{}{value}}
 }
 
 // Between returns a between condition on a column.
+//
+// Two '?' placeholders are used so it may be necessary to replace placeholders in the
+// resulting query, e.g using 'dialect.ReplacePlaceholdersWithNumbers(query)'.
 func Between(column string, a, b interface{}) Expression {
 	return Condition{column, " BETWEEN ? AND ?", []interface{}{a, b}}
 }
 
 // Like returns a pattern-matching condition on a column. Be careful: this can hurt performance.
+//
+// A '?' placeholder is used so it may be necessary to replace placeholders in the
+// resulting query, e.g using 'dialect.ReplacePlaceholdersWithNumbers(query)'.
 func Like(column string, pattern string) Expression {
 	return Condition{column, " LIKE ?", []interface{}{pattern}}
 }
 
-// In returns an in condition on a column.
+// In returns an 'IN' condition on a column.
+// * If there a no values, this becomes a no-op.
+// * If any of the values is itself a slice or array, it is expanded to use all the contained values.
+// * If any value is nil, an 'IS NULL' expression is OR-ed with the 'IN' expression.
+//
+// Some '?' placeholders are used so it may be necessary to replace placeholders in the
+// resulting query, e.g using 'dialect.ReplacePlaceholdersWithNumbers(query)'.
 func In(column string, values ...interface{}) Expression {
 	if len(values) == 0 {
 		return NoOp()
