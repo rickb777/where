@@ -317,7 +317,7 @@ func TestQueryConstraint(t *testing.T) {
 		var sql string
 
 		if c.qc != nil {
-			sql = c.qc.Build()
+			sql = where.Build(c.qc)
 		}
 
 		g.Expect(sql).To(Equal(c.expPostgres), strconv.Itoa(i))

@@ -18,6 +18,14 @@ func pickQuoter(quoter []quote.Quoter) quote.Quoter {
 	return quote.DefaultQuoter
 }
 
+// Build builds a query constraint. It allows nil values.
+func Build(qc QueryConstraint, q ...quote.Quoter) string {
+	if qc == nil {
+		return ""
+	}
+	return qc.Build(q...)
+}
+
 //-------------------------------------------------------------------------------------------------
 
 type literal string
