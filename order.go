@@ -1,9 +1,10 @@
 package where
 
 import (
-	"github.com/rickb777/where/quote"
 	"strconv"
 	"strings"
+
+	"github.com/rickb777/where/quote"
 )
 
 const (

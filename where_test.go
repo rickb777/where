@@ -2,13 +2,14 @@ package where_test
 
 import (
 	"fmt"
+	"strconv"
+	"testing"
+
 	"github.com/benmoss/matchers"
 	. "github.com/onsi/gomega"
 	"github.com/rickb777/where"
 	"github.com/rickb777/where/dialect"
 	"github.com/rickb777/where/quote"
-	"strconv"
-	"testing"
 )
 
 func TestBuildWhereClause_happyCases(t *testing.T) {

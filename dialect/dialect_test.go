@@ -1,8 +1,9 @@
 package dialect
 
 import (
-	. "github.com/onsi/gomega"
 	"testing"
+
+	. "github.com/onsi/gomega"
 )
 
 func TestReplacePlaceholders(t *testing.T) {

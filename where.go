@@ -10,9 +10,10 @@ package where
 import (
 	"bytes"
 	"fmt"
-	"github.com/rickb777/where/quote"
 	"reflect"
 	"strings"
+
+	"github.com/rickb777/where/quote"
 )
 
 const (

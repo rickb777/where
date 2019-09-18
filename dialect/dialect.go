@@ -4,9 +4,10 @@
 package dialect
 
 import (
-	"github.com/rickb777/where/quote"
 	"strconv"
 	"strings"
+
+	"github.com/rickb777/where/quote"
 )
 
 // PlaceholderStyle enumerates the different ways of including placeholders in SQL.

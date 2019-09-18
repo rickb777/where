@@ -2,6 +2,7 @@ package where
 
 import (
 	"fmt"
+
 	"github.com/rickb777/where/quote"
 )
 
