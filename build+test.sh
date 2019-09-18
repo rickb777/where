@@ -1,6 +1,7 @@
 #!/bin/bash -e
 cd "$(dirname $0)"
 
+PATH=$HOME/go/bin:$PATH
 unset GOPATH
 export GO111MODULE=on
 
