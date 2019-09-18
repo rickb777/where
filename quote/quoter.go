@@ -1,3 +1,6 @@
+// Package quote augments SQL strings by quoting identifiers according to three common
+// variants: back-ticks used by MySQL, double-quotes used in ANSI SQL (PostgreSQL etc),
+// or no quotes at all.
 package quote
 
 import (
@@ -13,7 +16,7 @@ type StringWriter interface {
 	String() string
 }
 
-// Quoter wraps identifiers in quote marks. Compound identifers (i.e. those with an alias prefix)
+// Quoter wraps identifiers in quote marks. Compound identifiers (i.e. those with an alias prefix)
 // are handled according to SQL grammar.
 type Quoter interface {
 	Quote(identifier string) string

@@ -1,3 +1,6 @@
+// Package dialect handles SQL placeholders in various dialect-specific ways. So queries should
+// be written using '?' query placeholders throughout, and then this package will translate to
+// the form needed by the chosen dialect.
 package dialect
 
 import (
@@ -6,19 +9,26 @@ import (
 	"strings"
 )
 
+// PlaceholderStyle enumerates the different ways of including placeholders in SQL.
 type PlaceholderStyle int
 
 const (
+	// Queries is the '?' placeholder style and is assumed to be used prior to translation.
 	Queries PlaceholderStyle = iota
+	// Numbered placeholders '$1', '$2' etc are used (e.g.) in PostgreSQL.
 	Numbered
-	//Named
+	// Named placeholders ":name" are used (e.g.) in Oracle. NOT YET SUPPORTED
+	Named
 )
 
 //-------------------------------------------------------------------------------------------------
 
 const (
+	// SqliteIndex identifies SQLite
 	SqliteIndex = iota
+	// MysqlIndex identifies MySQL
 	MysqlIndex
+	// PostgresIndex identifies PostgreSQL
 	PostgresIndex
 )
 
@@ -61,15 +71,13 @@ var Postgres = Dialect{
 	Quoter:           quote.AnsiQuoter,
 }
 
+// Dialect holds the settings to be used in SQL translation functions.
 type Dialect struct {
 	// Name is used for
 	Ident int
 
-	// HasNumberedPlaceholders is true for numbered placehoders (Postgresql),
-	// or false for the default '?' placeholders.
+	// PlaceholderStyle specifies the way of including placeholders in SQL.
 	PlaceholderStyle PlaceholderStyle
-
-	// named placeholders (e.g. for Oracle) are not yet supported
 
 	// Quoter determines the quote marks surrounding identifiers.
 	Quoter quote.Quoter

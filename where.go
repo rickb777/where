@@ -1,4 +1,4 @@
-// package where provides composable expressions for WHERE and HAVING clauses in SQL.
+// Package where provides composable expressions for WHERE and HAVING clauses in SQL.
 // These can range from the very simplest no-op to complex nested trees of 'and' and 'or'
 // conditions.
 //

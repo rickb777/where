@@ -3,5 +3,4 @@
 *.txt
 _docs
 .idea/workspace.xml
-reports/
-vendor/
+dot.out
