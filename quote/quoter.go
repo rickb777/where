@@ -4,12 +4,12 @@
 package quote
 
 import (
-	"bytes"
 	"strings"
 )
 
 // StringWriter is an interface that wraps the WriteString method.
-// Note that bytes.Buffer happens to implement this interface.
+// Note that strings.Builder and its older sibling bytes.Buffer both happen to
+// implement this interface.
 type StringWriter interface {
 	//io.Writer
 	WriteString(s string) (n int, err error)
@@ -21,7 +21,7 @@ type StringWriter interface {
 type Quoter interface {
 	Quote(identifier string) string
 	QuoteN(identifiers []string) []string
-	QuoteW(w StringWriter, identifier string)
+	QuoteW(w StringWriter, identifier string) (n int, err error)
 }
 
 const (
@@ -51,19 +51,35 @@ func NewQuoter(mark string) Quoter {
 	return quoter(mark)
 }
 
-// quoter wraps identifiers in quote marks. Compound identifers (i.e. those with an alias prefix)
+// PickQuoter picks a quoter based on the names "ansi", "mysql" or "none".
+// If none match, then nil is returned.
+func PickQuoter(name string) Quoter {
+	switch name {
+	case "ansi":
+		return AnsiQuoter
+	case "mysql":
+		return MySqlQuoter
+	case "none":
+		return NoQuoter
+	default:
+		return nil
+	}
+}
+
+// quoter wraps identifiers in quote marks. Compound identifiers (i.e. those with an alias prefix)
 // are handled according to SQL grammar.
 type quoter string
 
 // Quote renders an identifier within quote marks. If the identifier consists of both a
-// prefix and a name, each part is quoted separately. For better performance, use QuoteW
-// instead of Quote wherever possible.
+// prefix and a name, each part is quoted separately. Any i/o errors are silently dropped.
+// For better performance, use QuoteW instead of Quote wherever possible.
 func (q quoter) Quote(identifier string) string {
 	if len(q) == 0 {
 		return identifier
 	}
 
-	w := bytes.NewBuffer(make([]byte, 0, len(identifier)+4))
+	w := new(strings.Builder)
+	w.Grow(len(identifier) + 2*len(q))
 	q.QuoteW(w, identifier)
 	return w.String()
 }
@@ -74,7 +90,7 @@ func (q quoter) QuoteN(identifiers []string) []string {
 		return identifiers
 	}
 
-	var r []string
+	r := make([]string, 0, len(identifiers))
 	for _, id := range identifiers {
 		r = append(r, q.Quote(id))
 	}
@@ -83,24 +99,54 @@ func (q quoter) QuoteN(identifiers []string) []string {
 
 // QuoteW renders an identifier within quote marks. If the identifier consists of both a
 // prefix and a name, each part is quoted separately.
-func (q quoter) QuoteW(w StringWriter, identifier string) {
+func (q quoter) QuoteW(w StringWriter, identifier string) (n int, err error) {
 	if len(q) == 0 {
-		w.WriteString(identifier)
+		return w.WriteString(identifier)
 	} else {
 		elements := strings.Split(identifier, ".")
-		quoteW(w, string(q), string(q)+"."+string(q), string(q), elements...)
+		return quoteW(w, q, q+"."+q, q, elements...)
 	}
 }
 
-func quoteW(w StringWriter, before, sep, after string, elements ...string) {
-	if len(elements) > 0 {
-		w.WriteString(before)
-		for i, e := range elements {
-			if i > 0 {
-				w.WriteString(sep)
-			}
-			w.WriteString(e)
-		}
-		w.WriteString(after)
+func quoteW(w StringWriter, before, sep, after quoter, elements ...string) (n int, err error) {
+	if len(elements) == 0 {
+		return 0, nil
 	}
+
+	var i int
+	i, err = w.WriteString(string(before))
+	n += i
+	if err != nil {
+		return n, err
+	}
+
+	// element[0] is always present
+	i, err = w.WriteString(elements[0])
+	n += i
+	if err != nil {
+		return n, err
+	}
+
+	// write the rest of the elements, preceding each with the separator
+	for _, e := range elements[1:] {
+		i, err = w.WriteString(string(sep))
+		n += i
+		if err != nil {
+			return n, err
+		}
+
+		i, err = w.WriteString(e)
+		n += i
+		if err != nil {
+			return n, err
+		}
+	}
+
+	i, err = w.WriteString(string(after))
+	n += i
+	if err != nil {
+		return n, err
+	}
+
+	return n, err
 }

@@ -5,7 +5,6 @@ import (
 	"strconv"
 	"testing"
 
-	"github.com/benmoss/matchers"
 	. "github.com/onsi/gomega"
 	"github.com/rickb777/where"
 	"github.com/rickb777/where/dialect"
@@ -280,7 +279,7 @@ func TestBuildWhereClause_happyCases(t *testing.T) {
 		sql, args := where.Where(c.wh)
 
 		g.Expect(sql).To(Equal(c.expSQL), info)
-		g.Expect(args).To(matchers.DeepEqual(c.args), info)
+		g.Expect(args).To(Equal(c.args), info)
 
 		s := c.wh.String()
 
