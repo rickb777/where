@@ -88,13 +88,14 @@ func (qc *queryConstraint) Offset(n int) *queryConstraint {
 	return qc
 }
 
-func ascDesc(dir int, b quote.StringWriter) {
+func ascDesc(dir int) string {
 	switch dir {
 	case asc:
-		b.WriteString(" ASC")
+		return " ASC"
 	case desc:
-		b.WriteString(" DESC")
+		return " DESC"
 	}
+	return ""
 }
 
 func intTerm(b quote.StringWriter, spacer, noun string, value int) {
@@ -106,7 +107,9 @@ func intTerm(b quote.StringWriter, spacer, noun string, value int) {
 // Build constructs the SQL string using the optional quoter or the default quoter.
 func (qc *queryConstraint) Build(quoter ...quote.Quoter) string {
 	q := pickQuoter(quoter)
-	b := &strings.Builder{}
+	b := new(strings.Builder)
+	b.Grow(qc.estimateStringLength())
+
 	spacer := ""
 
 	if len(qc.orderBy) > 0 {
@@ -120,9 +123,9 @@ func (qc *queryConstraint) Build(quoter ...quote.Quoter) string {
 			b.WriteByte(' ')
 			q.QuoteW(b, col.column)
 			if i == last {
-				ascDesc(col.dir, b)
+				b.WriteString(ascDesc(col.dir))
 			} else if col.dir != qc.orderBy[i+1].dir {
-				ascDesc(col.dir, b)
+				b.WriteString(ascDesc(col.dir))
 			}
 		}
 
@@ -139,6 +142,25 @@ func (qc *queryConstraint) Build(quoter ...quote.Quoter) string {
 	}
 
 	return b.String()
+}
+
+func (qc *queryConstraint) estimateStringLength() (n int) {
+	if len(qc.orderBy) > 0 {
+		n += 13 // "ORDER BY" and " DESC"
+		for _, col := range qc.orderBy {
+			n += len(col.column) + 4 // allow for 2 quote marks, space and comma
+		}
+	}
+
+	if qc.limit > 0 {
+		n += 12 // "LIMIT " + number
+	}
+
+	if qc.offset > 0 {
+		n += 13 // "OFFSET " + number
+	}
+
+	return n
 }
 
 func (qc *queryConstraint) String() string {

@@ -8,7 +8,6 @@
 package where
 
 import (
-	"bytes"
 	"fmt"
 	"reflect"
 	"strings"
@@ -156,7 +155,10 @@ func (wh Clause) String() string {
 //-------------------------------------------------------------------------------------------------
 
 func insertLiteralValues(sql string, args []interface{}) string {
-	buf := &bytes.Buffer{}
+	// create a buffer with approximately enough space
+	buf := new(strings.Builder)
+	buf.Grow(len(sql) + 6*len(args))
+
 	idx := 0
 	for _, r := range sql {
 		if r == '?' && idx < len(args) {
