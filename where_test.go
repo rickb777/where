@@ -342,7 +342,7 @@ func BenchmarkQueryConstraint(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		for _, c := range queryConstraintCases {
 			if c.qc != nil {
-				_ = where.Build(c.qc, quote.AnsiQuoter)
+				_ = where.Build(c.qc, dialect.Sqlite)
 			}
 		}
 	}
