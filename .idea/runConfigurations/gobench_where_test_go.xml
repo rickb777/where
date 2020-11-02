@@ -1,0 +1,13 @@
+<component name="ProjectRunConfigurationManager">
+  <configuration default="false" name="gobench where_test.go" type="GoTestRunConfiguration" factoryName="Go Test" nameIsGenerated="true">
+    <module name="where" />
+    <working_directory value="$PROJECT_DIR$" />
+    <parameters value="-test.benchmem" />
+    <framework value="gobench" />
+    <kind value="FILE" />
+    <package value="github.com/rickb777/where" />
+    <directory value="$PROJECT_DIR$" />
+    <filePath value="$PROJECT_DIR$/where_test.go" />
+    <method v="2" />
+  </configuration>
+</component>

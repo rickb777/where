@@ -1,6 +1,6 @@
 # where
 
-[![GoDoc](https://img.shields.io/badge/api-Godoc-blue.svg?style=flat-square)](https://godoc.org/github.com/rickb777/where)
+[![GoDoc](https://img.shields.io/badge/api-Godoc-blue.svg)](https://pkg.go.dev/github.com/rickb777/where)
 [![Build Status](https://travis-ci.org/rickb777/where.svg?branch=master)](https://travis-ci.org/rickb777/where)
 [![Code Coverage](https://img.shields.io/coveralls/rickb777/where.svg)](https://coveralls.io/r/rickb777/where)
 [![Go Report Card](https://goreportcard.com/badge/github.com/rickb777/where)](https://goreportcard.com/report/github.com/rickb777/where)

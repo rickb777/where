@@ -3,4 +3,5 @@
 *.txt
 _docs
 .idea/workspace.xml
+.idea/shelf/
 dot.out
