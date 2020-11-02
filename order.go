@@ -1,10 +1,11 @@
 package where
 
 import (
+	"io"
 	"strconv"
 	"strings"
 
-	"github.com/rickb777/where/quote"
+	"github.com/rickb777/where/dialect"
 )
 
 const (
@@ -88,7 +89,7 @@ func (qc *queryConstraint) Offset(n int) *queryConstraint {
 	return qc
 }
 
-func ascDesc(dir int, b quote.StringWriter) {
+func ascDesc(dir int, b io.StringWriter) {
 	switch dir {
 	case asc:
 		b.WriteString(" ASC")
@@ -97,15 +98,15 @@ func ascDesc(dir int, b quote.StringWriter) {
 	}
 }
 
-func intTerm(b quote.StringWriter, spacer, noun string, value int) {
+func intTerm(b io.StringWriter, spacer, noun string, value int) {
 	b.WriteString(spacer)
 	b.WriteString(noun)
 	b.WriteString(strconv.Itoa(value))
 }
 
 // Build constructs the SQL string using the optional quoter or the default quoter.
-func (qc *queryConstraint) Build(quoter ...quote.Quoter) string {
-	q := pickQuoter(quoter)
+func (qc *queryConstraint) Build(d dialect.Dialect) string {
+	q := d.Quoter
 	b := &strings.Builder{}
 	spacer := ""
 
@@ -142,5 +143,5 @@ func (qc *queryConstraint) Build(quoter ...quote.Quoter) string {
 }
 
 func (qc *queryConstraint) String() string {
-	return qc.Build(quote.DefaultQuoter)
+	return qc.Build(dialect.DefaultDialect)
 }

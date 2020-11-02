@@ -5,23 +5,16 @@ package quote
 
 import (
 	"bytes"
+	"io"
 	"strings"
 )
-
-// StringWriter is an interface that wraps the WriteString method.
-// Note that bytes.Buffer happens to implement this interface.
-type StringWriter interface {
-	//io.Writer
-	WriteString(s string) (n int, err error)
-	String() string
-}
 
 // Quoter wraps identifiers in quote marks. Compound identifiers (i.e. those with an alias prefix)
 // are handled according to SQL grammar.
 type Quoter interface {
 	Quote(identifier string) string
 	QuoteN(identifiers []string) []string
-	QuoteW(w StringWriter, identifier string)
+	QuoteW(w io.StringWriter, identifier string)
 }
 
 const (
@@ -83,7 +76,7 @@ func (q quoter) QuoteN(identifiers []string) []string {
 
 // QuoteW renders an identifier within quote marks. If the identifier consists of both a
 // prefix and a name, each part is quoted separately.
-func (q quoter) QuoteW(w StringWriter, identifier string) {
+func (q quoter) QuoteW(w io.StringWriter, identifier string) {
 	if len(q) == 0 {
 		w.WriteString(identifier)
 	} else {
@@ -92,7 +85,7 @@ func (q quoter) QuoteW(w StringWriter, identifier string) {
 	}
 }
 
-func quoteW(w StringWriter, before, sep, after string, elements ...string) {
+func quoteW(w io.StringWriter, before, sep, after string, elements ...string) {
 	if len(elements) > 0 {
 		w.WriteString(before)
 		for i, e := range elements {
