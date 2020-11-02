@@ -3,13 +3,14 @@ package where
 import (
 	"fmt"
 
+	"github.com/rickb777/where/dialect"
 	"github.com/rickb777/where/quote"
 )
 
 // QueryConstraint is a value that is appended to a SELECT statement.
 type QueryConstraint interface {
 	fmt.Stringer
-	Build(q ...quote.Quoter) string
+	Build(d dialect.Dialect) string
 }
 
 func pickQuoter(quoter []quote.Quoter) quote.Quoter {
@@ -20,11 +21,11 @@ func pickQuoter(quoter []quote.Quoter) quote.Quoter {
 }
 
 // Build builds a query constraint. It allows nil values.
-func Build(qc QueryConstraint, q ...quote.Quoter) string {
+func Build(qc QueryConstraint, d dialect.Dialect) string {
 	if qc == nil {
 		return ""
 	}
-	return qc.Build(q...)
+	return qc.Build(d)
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -38,7 +39,7 @@ func Literal(sqlPart string) QueryConstraint {
 	return literal(sqlPart)
 }
 
-func (qc literal) Build(_ ...quote.Quoter) string {
+func (qc literal) Build(d dialect.Dialect) string {
 	return string(qc)
 }
 

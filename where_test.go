@@ -331,7 +331,7 @@ func TestQueryConstraint(t *testing.T) {
 		var sql string
 
 		if c.qc != nil {
-			sql = where.Build(c.qc)
+			sql = where.Build(c.qc, dialect.Sqlite)
 		}
 
 		g.Expect(sql).To(Equal(c.expPostgres), strconv.Itoa(i))
@@ -342,7 +342,7 @@ func BenchmarkQueryConstraint(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		for _, c := range queryConstraintCases {
 			if c.qc != nil {
-				_ = where.Build(c.qc, quote.AnsiQuoter)
+				_ = where.Build(c.qc, dialect.Sqlite)
 			}
 		}
 	}
@@ -365,7 +365,7 @@ func ExampleWhere() {
 
 	// For Postgres, the placeholders have to be altered. It's necessary to do
 	// this on the whole query if there might be other placeholders in it too.
-	expr = dialect.ReplacePlaceholdersWithNumbers(expr)
+	expr = dialect.ReplacePlaceholdersWithNumbers(expr, "$")
 	fmt.Println(expr)
 	fmt.Println(args)
 
@@ -377,7 +377,7 @@ func ExampleOrderBy() {
 	qc := where.OrderBy("foo", "bar").Desc().Limit(10).Offset(20)
 
 	// The quoter is specified explicitly here, instead of relying on the default.
-	s := qc.Build(quote.AnsiQuoter)
+	s := qc.Build(dialect.Sqlite)
 	fmt.Println(s)
 	// Output: ORDER BY "foo", "bar" DESC LIMIT 10 OFFSET 20
 }
