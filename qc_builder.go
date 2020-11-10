@@ -13,6 +13,12 @@ const (
 	desc  = 2
 )
 
+var ascDesc = []string{
+	"",
+	" ASC",
+	" DESC",
+}
+
 type orderingTerm struct {
 	column string
 	dir    int
@@ -24,12 +30,6 @@ type queryConstraint struct {
 }
 
 var _ QueryConstraint = &queryConstraint{}
-
-var ascDesc = []string{
-	"",
-	" ASC",
-	" DESC",
-}
 
 // Build constructs the SQL string using the optional quoter or the default quoter.
 func (qc *queryConstraint) Build(d dialect.Dialect) string {
