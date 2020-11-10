@@ -25,126 +25,126 @@ var buildWhereClauseHappyCases = []struct {
 
 	{
 		where.Condition{Column: "name", Predicate: " not nil", Args: nil},
-		`WHERE "name" not nil`,
+		` WHERE "name" not nil`,
 		`"name" not nil`,
 		nil,
 	},
 
 	{
 		where.Condition{Column: "p.name", Predicate: " not nil", Args: nil},
-		`WHERE "p"."name" not nil`,
+		` WHERE "p"."name" not nil`,
 		`"p"."name" not nil`,
 		nil,
 	},
 
 	{
 		where.Null("name"),
-		`WHERE "name" IS NULL`,
+		` WHERE "name" IS NULL`,
 		`"name" IS NULL`,
 		nil,
 	},
 
 	{
 		where.NotNull("name"),
-		`WHERE "name" IS NOT NULL`,
+		` WHERE "name" IS NOT NULL`,
 		`"name" IS NOT NULL`,
 		nil,
 	},
 
 	{
 		where.Condition{Column: "name", Predicate: " <>?", Args: []interface{}{"Boo"}},
-		`WHERE "name" <>?`,
+		` WHERE "name" <>?`,
 		`"name" <>'Boo'`,
 		[]interface{}{"Boo"},
 	},
 
 	{
 		nameEqFredInt,
-		`WHERE "name"=?`,
+		` WHERE "name"=?`,
 		`"name"='Fred'`,
 		[]interface{}{"Fred"},
 	},
 
 	{
 		where.Like("name", "F%"),
-		`WHERE "name" LIKE ?`,
+		` WHERE "name" LIKE ?`,
 		`"name" LIKE 'F%'`,
 		[]interface{}{"F%"},
 	},
 
 	{
 		where.NoOp().And(nameEqFredInt),
-		`WHERE ("name"=?)`,
+		` WHERE ("name"=?)`,
 		`("name"='Fred')`,
 		[]interface{}{"Fred"},
 	},
 
 	{
 		nameEqFredInt.And(where.Gt("age", 10)),
-		`WHERE ("name"=?) AND ("age">?)`,
+		` WHERE ("name"=?) AND ("age">?)`,
 		`("name"='Fred') AND ("age">10)`,
 		[]interface{}{"Fred", 10},
 	},
 
 	{
 		nameEqFredInt.Or(where.Gt("age", 10)),
-		`WHERE ("name"=?) OR ("age">?)`,
+		` WHERE ("name"=?) OR ("age">?)`,
 		`("name"='Fred') OR ("age">10)`,
 		[]interface{}{"Fred", 10},
 	},
 
 	{
 		nameEqFredInt.And(ageGt5Int).And(where.Gt("weight", 15)),
-		`WHERE ("name"=?) AND ("age">?) AND ("weight">?)`,
+		` WHERE ("name"=?) AND ("age">?) AND ("weight">?)`,
 		`("name"='Fred') AND ("age">5) AND ("weight">15)`,
 		[]interface{}{"Fred", 5, 15},
 	},
 
 	{
 		nameEqFredInt.Or(ageGt5Int).Or(where.Gt("weight", 15)),
-		`WHERE ("name"=?) OR ("age">?) OR ("weight">?)`,
+		` WHERE ("name"=?) OR ("age">?) OR ("weight">?)`,
 		`("name"='Fred') OR ("age">5) OR ("weight">15)`,
 		[]interface{}{"Fred", 5, 15},
 	},
 
 	{
 		where.Between("age", 12, 18).Or(where.Gt("weight", 45)),
-		`WHERE ("age" BETWEEN ? AND ?) OR ("weight">?)`,
+		` WHERE ("age" BETWEEN ? AND ?) OR ("weight">?)`,
 		`("age" BETWEEN 12 AND 18) OR ("weight">45)`,
 		[]interface{}{12, 18, 45},
 	},
 
 	{
 		where.GtEq("age", 10),
-		`WHERE "age">=?`,
+		` WHERE "age">=?`,
 		`"age">=10`,
 		[]interface{}{10},
 	},
 
 	{
 		where.LtEq("age", 10),
-		`WHERE "age"<=?`,
+		` WHERE "age"<=?`,
 		`"age"<=10`,
 		[]interface{}{10},
 	},
 
 	{
 		where.NotEq("age", 10),
-		`WHERE "age"<>?`,
+		` WHERE "age"<>?`,
 		`"age"<>10`,
 		[]interface{}{10},
 	},
 
 	{
 		where.In("age", 10, 12, 14),
-		`WHERE "age" IN (?,?,?)`,
+		` WHERE "age" IN (?,?,?)`,
 		`"age" IN (10,12,14)`,
 		[]interface{}{10, 12, 14},
 	},
 
 	{
 		where.In("age", []int{10, 12, 14}),
-		`WHERE "age" IN (?,?,?)`,
+		` WHERE "age" IN (?,?,?)`,
 		`"age" IN (10,12,14)`,
 		[]interface{}{10, 12, 14},
 	},
@@ -158,98 +158,98 @@ var buildWhereClauseHappyCases = []struct {
 
 	{ // 'In' with mixed value and nil vararg parameters
 		where.In("age", 1, nil, 2, nil),
-		`WHERE ("age" IN (?,?)) OR ("age" IS NULL)`,
+		` WHERE ("age" IN (?,?)) OR ("age" IS NULL)`,
 		`("age" IN (1,2)) OR ("age" IS NULL)`,
 		[]interface{}{1, 2},
 	},
 
 	{ // 'In' with only a nil vararg parameter
 		where.In("age", nil),
-		`WHERE ("age" IS NULL)`,
+		` WHERE ("age" IS NULL)`,
 		`("age" IS NULL)`,
 		nil,
 	},
 
 	{
 		where.Not(nameEqFredInt),
-		`WHERE NOT ("name"=?)`,
+		` WHERE NOT ("name"=?)`,
 		`NOT ("name"='Fred')`,
 		[]interface{}{"Fred"},
 	},
 
 	{
 		where.Not(nameEqFredInt.And(ageLt10Int)),
-		`WHERE NOT (("name"=?) AND ("age"<?))`,
+		` WHERE NOT (("name"=?) AND ("age"<?))`,
 		`NOT (("name"='Fred') AND ("age"<10))`,
 		[]interface{}{"Fred", 10},
 	},
 
 	{
 		where.Not(nameEqFredInt.Or(ageLt10Int)),
-		`WHERE NOT (("name"=?) OR ("age"<?))`,
+		` WHERE NOT (("name"=?) OR ("age"<?))`,
 		`NOT (("name"='Fred') OR ("age"<10))`,
 		[]interface{}{"Fred", 10},
 	},
 
 	{
 		where.Not(nameEqFredInt).And(ageLt10Int),
-		`WHERE (NOT ("name"=?)) AND ("age"<?)`,
+		` WHERE (NOT ("name"=?)) AND ("age"<?)`,
 		`(NOT ("name"='Fred')) AND ("age"<10)`,
 		[]interface{}{"Fred", 10},
 	},
 
 	{
 		where.Not(nameEqFredInt).Or(ageLt10Int),
-		`WHERE (NOT ("name"=?)) OR ("age"<?)`,
+		` WHERE (NOT ("name"=?)) OR ("age"<?)`,
 		`(NOT ("name"='Fred')) OR ("age"<10)`,
 		[]interface{}{"Fred", 10},
 	},
 
 	{
 		where.And(nameEqFredInt, ageLt10Int),
-		`WHERE ("name"=?) AND ("age"<?)`,
+		` WHERE ("name"=?) AND ("age"<?)`,
 		`("name"='Fred') AND ("age"<10)`,
 		[]interface{}{"Fred", 10},
 	},
 
 	{
 		where.And(nameEqFredInt).And(where.And(ageLt10Int)),
-		`WHERE ("name"=?) AND ("age"<?)`,
+		` WHERE ("name"=?) AND ("age"<?)`,
 		`("name"='Fred') AND ("age"<10)`,
 		[]interface{}{"Fred", 10},
 	},
 
 	{
 		where.Or(nameEqFredInt, ageLt10Int),
-		`WHERE ("name"=?) OR ("age"<?)`,
+		` WHERE ("name"=?) OR ("age"<?)`,
 		`("name"='Fred') OR ("age"<10)`,
 		[]interface{}{"Fred", 10},
 	},
 
 	{
 		where.And(nameEqFredInt.Or(nameEqJohnInt), ageLt10Int),
-		`WHERE (("name"=?) OR ("name"=?)) AND ("age"<?)`,
+		` WHERE (("name"=?) OR ("name"=?)) AND ("age"<?)`,
 		`(("name"='Fred') OR ("name"='John')) AND ("age"<10)`,
 		[]interface{}{"Fred", "John", 10},
 	},
 
 	{
 		where.Or(nameEqFredInt, ageLt10Int.And(ageGt5Int)),
-		`WHERE ("name"=?) OR (("age"<?) AND ("age">?))`,
+		` WHERE ("name"=?) OR (("age"<?) AND ("age">?))`,
 		`("name"='Fred') OR (("age"<10) AND ("age">5))`,
 		[]interface{}{"Fred", 10, 5},
 	},
 
 	{
 		where.Or(nameEqFredInt, nameEqJohnInt).And(ageGt5Int),
-		`WHERE (("name"=?) OR ("name"=?)) AND ("age">?)`,
+		` WHERE (("name"=?) OR ("name"=?)) AND ("age">?)`,
 		`(("name"='Fred') OR ("name"='John')) AND ("age">5)`,
 		[]interface{}{"Fred", "John", 5},
 	},
 
 	{
 		where.Or(nameEqFredInt, nameEqJohnInt, where.And(ageGt5Int)),
-		`WHERE ("name"=?) OR ("name"=?) OR (("age">?))`,
+		` WHERE ("name"=?) OR ("name"=?) OR (("age">?))`,
 		`("name"='Fred') OR ("name"='John') OR (("age">5))`,
 		[]interface{}{"Fred", "John", 5},
 	},

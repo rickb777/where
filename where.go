@@ -16,8 +16,8 @@ import (
 )
 
 const (
-	whereAdverb = "WHERE "
-	havingVerb  = "HAVING "
+	whereAdverb = " WHERE "
+	havingVerb  = " HAVING "
 )
 
 // Expression is an element in a WHERE clause. Expressions consist of simple conditions or

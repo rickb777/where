@@ -1,7 +1,6 @@
 package where
 
 import (
-	"io"
 	"strconv"
 	"strings"
 
@@ -32,22 +31,14 @@ var ascDesc = []string{
 	" DESC",
 }
 
-func intTerm(b io.StringWriter, spacer, noun string, value int) {
-	b.WriteString(spacer)
-	b.WriteString(noun)
-	b.WriteString(strconv.Itoa(value))
-}
-
 // Build constructs the SQL string using the optional quoter or the default quoter.
 func (qc *queryConstraint) Build(d dialect.Dialect) string {
 	q := d.Config().Quoter
 	b := new(strings.Builder)
 	b.Grow(qc.estimateStringLength())
 
-	spacer := ""
-
 	if len(qc.orderBy) > 0 {
-		b.WriteString("ORDER BY")
+		b.WriteString(" ORDER BY")
 		last := len(qc.orderBy) - 1
 
 		for i, col := range qc.orderBy {
@@ -62,17 +53,16 @@ func (qc *queryConstraint) Build(d dialect.Dialect) string {
 				b.WriteString(ascDesc[col.dir])
 			}
 		}
-
-		spacer = " "
 	}
 
 	if qc.limit > 0 && d != dialect.SqlServer {
-		intTerm(b, spacer, "LIMIT ", qc.limit)
-		spacer = " "
+		b.WriteString(" LIMIT ")
+		b.WriteString(strconv.Itoa(qc.limit))
 	}
 
 	if qc.offset > 0 {
-		intTerm(b, spacer, "OFFSET ", qc.offset)
+		b.WriteString(" OFFSET ")
+		b.WriteString(strconv.Itoa(qc.offset))
 	}
 
 	return b.String()
@@ -82,36 +72,33 @@ func (qc *queryConstraint) Build(d dialect.Dialect) string {
 // for which this is used is SQL-Server; otherwise it returns an empty string. Insert
 // the returned value into your query between "SELECT [DISTINCT] " and the list of columns.
 func (qc *queryConstraint) BuildTop(d dialect.Dialect) string {
-	if d != dialect.SqlServer {
+	if d != dialect.SqlServer || qc.limit == 0 {
 		return ""
 	}
 
 	b := new(strings.Builder)
 	b.Grow(10)
-
-	if qc.limit > 0 {
-		b.WriteString("TOP (")
-		b.WriteString(strconv.Itoa(qc.limit))
-		b.WriteString(")")
-	}
+	b.WriteString(" TOP (")
+	b.WriteString(strconv.Itoa(qc.limit))
+	b.WriteString(")")
 
 	return b.String()
 }
 
 func (qc *queryConstraint) estimateStringLength() (n int) {
 	if len(qc.orderBy) > 0 {
-		n += 13 // "ORDER BY" and " DESC"
+		n += 14 // " ORDER BY" and " DESC"
 		for _, col := range qc.orderBy {
 			n += len(col.column) + 4 // allow for 2 quote marks, space and comma
 		}
 	}
 
 	if qc.limit > 0 {
-		n += 12 // "LIMIT " + number
+		n += 13 // " LIMIT " + number
 	}
 
 	if qc.offset > 0 {
-		n += 13 // "OFFSET " + number
+		n += 14 // " OFFSET " + number
 	}
 
 	return n
