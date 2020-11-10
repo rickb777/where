@@ -1,10 +1,3 @@
-// Package where provides composable expressions for WHERE and HAVING clauses in SQL.
-// These can range from the very simplest no-op to complex nested trees of 'and' and 'or'
-// conditions.
-//
-// Also in this package are query constraints to provide 'ORDER BY', 'LIMIT' and 'OFFSET'
-// clauses. These are similar to 'WHERE' clauses except literal values are used instead
-// of parameter placeholders.
 package where
 
 import (
@@ -84,12 +77,13 @@ func (not not) String() string {
 // This can also be constructed directly, which will be useful for non-portable
 // cases, such as Postgresql 'SIMILAR TO'
 //
-//     expr := where.Condition{column, " SIMILAR TO", []interface{}{pattern}}
+//     expr := where.Condition{Column: "name", Predicate: " SIMILAR TO", Args: []interface{}{pattern}}
 //
 // Also for literal values (taking care to protect against injection attacks)
 //
-//     expr := where.Condition{column, " = 'hello'", nil}
+//     expr := where.Condition{Column: "age", Predicate: " = 47", Args: nil}
 //
+// See Literal.
 type Condition struct {
 	Column, Predicate string
 	Args              []interface{}
@@ -97,21 +91,10 @@ type Condition struct {
 
 func (cl Condition) build(q quote.Quoter) (string, []interface{}) {
 	sql := q.Quote(cl.Column) + cl.Predicate
-
-	var args []interface{}
-	for _, arg := range cl.Args {
-		value := reflect.ValueOf(arg)
-		switch value.Kind() {
-		case reflect.Array, reflect.Slice:
-			for j := 0; j < value.Len(); j++ {
-				args = append(args, value.Index(j).Interface())
-			}
-
-		default:
-			args = append(args, arg)
-		}
+	if len(cl.Args) > 0 {
+		return sql, cl.Args
 	}
-	return sql, args
+	return sql, nil
 }
 
 func (cl Condition) String() string {

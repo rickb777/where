@@ -142,13 +142,6 @@ var buildWhereClauseHappyCases = []struct {
 		[]interface{}{10, 12, 14},
 	},
 
-	{
-		where.In("age", []int{10, 12, 14}),
-		` WHERE "age" IN (?,?,?)`,
-		`"age" IN (10,12,14)`,
-		[]interface{}{10, 12, 14},
-	},
-
 	{ // 'In' without any vararg parameters
 		where.In("age"),
 		``,
