@@ -40,7 +40,7 @@ func intTerm(b io.StringWriter, spacer, noun string, value int) {
 
 // Build constructs the SQL string using the optional quoter or the default quoter.
 func (qc *queryConstraint) Build(d dialect.Dialect) string {
-	q := d.Quoter
+	q := d.Config().Quoter
 	b := new(strings.Builder)
 	b.Grow(qc.estimateStringLength())
 
@@ -66,7 +66,7 @@ func (qc *queryConstraint) Build(d dialect.Dialect) string {
 		spacer = " "
 	}
 
-	if qc.limit > 0 && d.Ident != dialect.SqlServerIndex {
+	if qc.limit > 0 && d != dialect.SqlServer {
 		intTerm(b, spacer, "LIMIT ", qc.limit)
 		spacer = " "
 	}
@@ -78,9 +78,11 @@ func (qc *queryConstraint) Build(d dialect.Dialect) string {
 	return b.String()
 }
 
-// BuildTop constructs the SQL string using the optional quoter or the default quoter.
+// BuildTop constructs the SQL string using the given dialect. The only known dialect
+// for which this is used is SQL-Server; otherwise it returns an empty string. Insert
+// the returned value into your query between "SELECT [DISTINCT] " and the list of columns.
 func (qc *queryConstraint) BuildTop(d dialect.Dialect) string {
-	if d.Ident != dialect.SqlServerIndex {
+	if d != dialect.SqlServer {
 		return ""
 	}
 

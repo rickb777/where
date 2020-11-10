@@ -23,6 +23,9 @@ func pickQuoter(quoter []quote.Quoter) quote.Quoter {
 }
 
 // BuildTop builds a query constraint as used by SQL-Server. It allows nil values.
+// The only known dialect for which this is used is SQL-Server; otherwise it returns
+// an empty string. Insert the returned value into your query between "SELECT [DISTINCT] "
+// and the list of columns.
 func BuildTop(qc QueryConstraint, d dialect.Dialect) string {
 	if qc == nil {
 		return ""

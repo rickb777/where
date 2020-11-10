@@ -1,6 +1,8 @@
-// Package dialect handles SQL placeholders in various dialect-specific ways. So queries should
-// be written using '?' query placeholders throughout, and then this package will translate to
+// Package dialect handles quote marks and SQL placeholders in various dialect-specific ways.
+// Queries should be written using '?' query placeholders throughout, and then this package will translate to
 // the form needed by the chosen dialect.
+//
+// The XyzConfig variables are mutable so you can alter them if required. You can also alter DefaultDialect.
 package dialect
 
 import (
@@ -24,15 +26,18 @@ const (
 
 //-------------------------------------------------------------------------------------------------
 
+type Dialect int
+
 const (
-	// SqliteIndex identifies SQLite
-	SqliteIndex = iota
-	// MysqlIndex identifies MySQL (also works for MariaDB)
-	MysqlIndex
-	// PostgresIndex identifies PostgreSQL
-	PostgresIndex
-	// SqlServerIndex identifies SqlServer (MS-SQL)
-	SqlServerIndex
+	undefined Dialect = iota
+	// Sqlite identifies SQLite
+	Sqlite
+	// Mysql identifies MySQL (also works for MariaDB)
+	Mysql
+	// Postgres identifies PostgreSQL
+	Postgres
+	// SqlServer identifies SqlServer (MS-SQL)
+	SqlServer
 )
 
 //-------------------------------------------------------------------------------------------------
@@ -50,38 +55,52 @@ func PickDialect(name string) (Dialect, bool) {
 	case "sqlserver", "sql-server", "mssql":
 		return SqlServer, true
 	}
-	return Dialect{}, false
+	return undefined, false
 }
 
 //-------------------------------------------------------------------------------------------------
 
-// Sqlite handles the Sqlite syntax.
-var Sqlite = Dialect{
-	Ident:            SqliteIndex,
+func (d Dialect) Config() DialectConfig {
+	switch d {
+	case Sqlite:
+		return SqliteConfig
+	case Mysql:
+		return MysqlConfig
+	case Postgres:
+		return PostgresConfig
+	case SqlServer:
+		return SqlServerConfig
+	}
+	return DialectConfig{}
+}
+
+// SqliteConfig handles the MySQL syntax.
+var SqliteConfig = DialectConfig{
+	Ident:            Sqlite,
 	PlaceholderStyle: Queries,
 	Quoter:           quote.AnsiQuoter,
 }
 
-// Mysql handles the MySQL syntax.
-var Mysql = Dialect{
-	Ident:            MysqlIndex,
+// MysqlConfig handles the MySQL syntax.
+var MysqlConfig = DialectConfig{
+	Ident:            Mysql,
 	PlaceholderStyle: Queries,
 	Quoter:           quote.MySqlQuoter,
 	CaseInsensitive:  true,
 }
 
-// Postgres handles the PostgreSQL syntax.
-var Postgres = Dialect{
-	Ident:             PostgresIndex,
+// PostgresConfig handles the PostgreSQL syntax.
+var PostgresConfig = DialectConfig{
+	Ident:             Postgres,
 	PlaceholderStyle:  Numbered,
 	PlaceholderPrefix: "$",
 	Quoter:            quote.AnsiQuoter,
 }
 
-// SqlServer handles the T-SQL syntax.
+// SqlServerConfig handles the T-SQL syntax.
 // https://docs.microsoft.com/en-us/sql/t-sql/language-reference?view=sql-server-ver15
-var SqlServer = Dialect{
-	Ident:             SqlServerIndex,
+var SqlServerConfig = DialectConfig{
+	Ident:             SqlServer,
 	PlaceholderStyle:  Numbered,
 	PlaceholderPrefix: "@p",
 	Quoter:            quote.AnsiQuoter, // can also use square brackets but that's not supported here
@@ -91,10 +110,10 @@ var DefaultDialect = Sqlite // chosen as being probably the simplest
 
 //-------------------------------------------------------------------------------------------------
 
-// Dialect holds the settings to be used in SQL translation functions.
-type Dialect struct {
+// DialectConfig holds the settings to be used in SQL translation functions.
+type DialectConfig struct {
 	// Name is used for
-	Ident int
+	Ident Dialect
 
 	// PlaceholderStyle specifies the way of including placeholders in SQL.
 	PlaceholderStyle PlaceholderStyle
@@ -109,22 +128,30 @@ type Dialect struct {
 	CaseInsensitive bool
 }
 
+//-------------------------------------------------------------------------------------------------
+
 // ReplacePlaceholders converts a string containing '?' placeholders to
 // the form used by the dialect.
-func (dialect Dialect) ReplacePlaceholders(sql string, names []string) string {
-	switch dialect.PlaceholderStyle {
+func (d Dialect) ReplacePlaceholders(sql string, names []string) string {
+	return d.Config().ReplacePlaceholders(sql, names)
+}
+
+// ReplacePlaceholders converts a string containing '?' placeholders to
+// the form used by the dialect.
+func (dc DialectConfig) ReplacePlaceholders(sql string, names []string) string {
+	switch dc.PlaceholderStyle {
 	case Numbered:
-		return ReplacePlaceholdersWithNumbers(sql, dialect.PlaceholderPrefix)
+		return ReplacePlaceholdersWithNumbers(sql, dc.PlaceholderPrefix)
 	case Queries:
 		return sql
 	}
-	panic(dialect.PlaceholderStyle)
+	panic(dc.PlaceholderStyle)
 }
 
 // ReplacePlaceholdersWithNumbers replaces all "?" placeholders with numbered
-// placeholders.
-// For PostgreSQL these will be "$1" and upward placeholders.
-// For SQL-Server, it inserts "@p1" and upward placeholders.
+// placeholders, using the given prefix.
+// For PostgreSQL these will be "$1" and upward placeholders so the prefix should be "$".
+// For SQL-Server there will be "@p1" and upward placeholders so the prefix should be "@p".
 func ReplacePlaceholdersWithNumbers(sql, prefix string) string {
 	n := 0
 	for _, r := range sql {
