@@ -211,11 +211,13 @@ func (wh Clause) Or(exp Expression) Expression {
 //-------------------------------------------------------------------------------------------------
 
 // And combines some expressions into a clause that requires they are all true.
+// Any nil items are silently dropped.
 func And(exp ...Expression) Expression {
 	return newClause(and, exp...)
 }
 
 // Or combines some expressions into a clause that requires that any is true.
+// Any nil items are silently dropped.
 func Or(exp ...Expression) Expression {
 	return newClause(or, exp...)
 }
@@ -223,10 +225,15 @@ func Or(exp ...Expression) Expression {
 func newClause(conj string, exp ...Expression) Expression {
 	var clause = Clause{nil, conj}
 	for _, e := range exp {
-		cl, isClause := e.(Clause)
-		if !isClause || len(cl.wheres) > 0 {
-			clause.wheres = append(clause.wheres, e)
+		if e != nil {
+			cl, isClause := e.(Clause)
+			if !isClause || len(cl.wheres) > 0 {
+				clause.wheres = append(clause.wheres, e)
+			}
 		}
+	}
+	if len(clause.wheres) == 1 {
+		return clause.wheres[0] // simplify the result
 	}
 	return clause
 }

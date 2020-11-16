@@ -158,8 +158,8 @@ var buildWhereClauseHappyCases = []struct {
 
 	{ // 'In' with only a nil vararg parameter
 		where.In("age", nil),
-		` WHERE ("age" IS NULL)`,
-		`("age" IS NULL)`,
+		` WHERE "age" IS NULL`,
+		`"age" IS NULL`,
 		nil,
 	},
 
@@ -199,7 +199,7 @@ var buildWhereClauseHappyCases = []struct {
 	},
 
 	{
-		where.And(nameEqFredInt, ageLt10Int),
+		where.And(nameEqFredInt, nil, ageLt10Int),
 		` WHERE ("name"=?) AND ("age"<?)`,
 		`("name"='Fred') AND ("age"<10)`,
 		[]interface{}{"Fred", 10},
@@ -213,7 +213,7 @@ var buildWhereClauseHappyCases = []struct {
 	},
 
 	{
-		where.Or(nameEqFredInt, ageLt10Int),
+		where.Or(nameEqFredInt, nil, ageLt10Int),
 		` WHERE ("name"=?) OR ("age"<?)`,
 		`("name"='Fred') OR ("age"<10)`,
 		[]interface{}{"Fred", 10},
@@ -242,20 +242,20 @@ var buildWhereClauseHappyCases = []struct {
 
 	{
 		where.Or(nameEqFredInt, nameEqJohnInt, where.And(ageGt5Int)),
-		` WHERE ("name"=?) OR ("name"=?) OR (("age">?))`,
-		`("name"='Fred') OR ("name"='John') OR (("age">5))`,
+		` WHERE ("name"=?) OR ("name"=?) OR ("age">?)`,
+		`("name"='Fred') OR ("name"='John') OR ("age">5)`,
 		[]interface{}{"Fred", "John", 5},
 	},
 
 	{
-		where.Or().Or(where.NoOp()).And(where.NoOp()),
+		where.Or(nil).Or(where.NoOp()).And(where.NoOp()),
 		"",
 		"",
 		nil,
 	},
 
 	{
-		where.And(where.Or(where.NoOp())),
+		where.And(nil, where.Or(where.NoOp(), nil)),
 		"",
 		"",
 		nil,
