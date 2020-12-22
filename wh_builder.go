@@ -1,6 +1,7 @@
 package where
 
 import (
+	"reflect"
 	"strings"
 )
 
@@ -93,11 +94,10 @@ func Like(column string, pattern string) Expression {
 
 // In returns an 'IN' condition on a column.
 // * If there a no values, this becomes a no-op.
-// * If any of the values is itself a slice or array, it is expanded to use all the contained values.
 // * If any value is nil, an 'IS NULL' expression is OR-ed with the 'IN' expression.
 //
-// Some '?' placeholders are used so it may be necessary to replace placeholders in the
-// resulting query, e.g using 'dialect.ReplacePlaceholdersWithNumbers(query)'.
+// Some '?' placeholders are used so it is necessary to replace placeholders in the
+// resulting query according to SQL dialect, e.g using 'dialect.ReplacePlaceholdersWithNumbers(query)'.
 func In(column string, values ...interface{}) Expression {
 	if len(values) == 0 {
 		return NoOp()
@@ -126,6 +126,64 @@ func In(column string, values ...interface{}) Expression {
 	result := NoOp()
 	if i > 0 {
 		result = Condition{Column: column, Predicate: buf.String(), Args: args}
+	}
+
+	if hasNull {
+		result = Or(result, Null(column))
+	}
+
+	return result
+}
+
+// InSlice returns an 'IN' condition on a column.
+// * If arg is nil, this becomes a no-op.
+// * arg is reflectively expanded as an array or slice to use all the contained values.
+// * If any value is nil, an 'IS NULL' expression is OR-ed with the 'IN' expression.
+//
+// Some '?' placeholders are used so it is necessary to replace placeholders in the
+// resulting query according to SQL dialect, e.g using 'dialect.ReplacePlaceholdersWithNumbers(query)'.
+func InSlice(column string, arg interface{}) Expression {
+	switch arg.(type) {
+	case nil:
+		return NoOp()
+	}
+
+	value := reflect.ValueOf(arg)
+
+	switch value.Kind() {
+	case reflect.Array, reflect.Slice:
+		// continue below
+	default:
+		panic("arg must be an array or slice")
+	}
+
+	hasNull := false
+	var v []interface{}
+	buf := &strings.Builder{}
+	buf.WriteString(" IN (")
+
+	for j := 0; j < value.Len(); j++ {
+		vj := value.Index(j)
+		switch vj.Kind() {
+		case reflect.Ptr, reflect.Interface:
+			if vj.IsNil() {
+				hasNull = true
+				continue
+			}
+		}
+
+		if len(v) > 0 {
+			buf.WriteByte(',')
+		}
+		buf.WriteByte('?')
+		v = append(v, vj.Interface())
+	}
+
+	buf.WriteByte(')')
+
+	result := NoOp()
+	if len(v) > 0 {
+		result = Condition{column, buf.String(), v}
 	}
 
 	if hasNull {

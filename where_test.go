@@ -164,6 +164,27 @@ var buildWhereClauseHappyCases = []struct {
 	},
 
 	{
+		where.InSlice("ages", []int{10, 12, 14}),
+		` WHERE "ages" IN (?,?,?)`,
+		`"ages" IN (10,12,14)`,
+		[]interface{}{10, 12, 14},
+	},
+
+	{ // 'InSlice' with mixed value and nil parameters
+		where.InSlice("ages", []interface{}{1, nil, 2, nil}),
+		` WHERE ("ages" IN (?,?)) OR ("ages" IS NULL)`,
+		`("ages" IN (1,2)) OR ("ages" IS NULL)`,
+		[]interface{}{1, 2},
+	},
+
+	{ // 'InSlice' with only a nil parameter
+		where.InSlice("ages", nil),
+		``,
+		``,
+		nil,
+	},
+
+	{
 		where.Not(nameEqFredInt),
 		` WHERE NOT ("name"=?)`,
 		`NOT ("name"='Fred')`,
