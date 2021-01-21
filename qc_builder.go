@@ -14,7 +14,7 @@ const (
 )
 
 var ascDesc = []string{
-	"",
+	" ASC",
 	" ASC",
 	" DESC",
 }
@@ -39,19 +39,23 @@ func (qc *queryConstraint) Build(d dialect.Dialect) string {
 
 	if len(qc.orderBy) > 0 {
 		b.WriteString(" ORDER BY")
-		last := len(qc.orderBy) - 1
+		hasDesc := false
 
-		for i, col := range qc.orderBy {
-			if i > 0 {
-				b.WriteByte(',')
+		for _, col := range qc.orderBy {
+			if col.dir == desc {
+				hasDesc = true
+				break
 			}
-			b.WriteByte(' ')
+		}
+
+		sep := " "
+		for _, col := range qc.orderBy {
+			b.WriteString(sep)
 			q.QuoteW(b, col.column)
-			if i == last {
-				b.WriteString(ascDesc[col.dir])
-			} else if col.dir != qc.orderBy[i+1].dir {
+			if hasDesc {
 				b.WriteString(ascDesc[col.dir])
 			}
+			sep = ", "
 		}
 	}
 

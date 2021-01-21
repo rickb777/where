@@ -61,6 +61,13 @@ func Offset(n int) *queryConstraint {
 // OrderBy lists the column(s) by which the database will be asked to sort its results.
 // The columns passed in here will be quoted according to the needs of the current dialect.
 func (qc *queryConstraint) OrderBy(column ...string) *queryConstraint {
+	// previous unset columns default to asc
+	for i := 0; i < len(qc.orderBy); i++ {
+		if qc.orderBy[i].dir == unset {
+			qc.orderBy[i].dir = asc
+		}
+	}
+
 	qc.orderBy = append(qc.orderBy, makeTerms(column)...)
 	return qc
 }
@@ -74,9 +81,11 @@ func makeTerms(column []string) []orderingTerm {
 }
 
 func (qc *queryConstraint) setDir(dir int) *queryConstraint {
-	for i := 0; i < len(qc.orderBy); i++ {
+	for i := len(qc.orderBy) - 1; i >= 0; i-- {
 		if qc.orderBy[i].dir == unset {
 			qc.orderBy[i].dir = dir
+		} else {
+			return qc
 		}
 	}
 	return qc

@@ -2,7 +2,6 @@ package where_test
 
 import (
 	"fmt"
-	"strconv"
 	"testing"
 
 	. "github.com/onsi/gomega"
@@ -10,47 +9,49 @@ import (
 	"github.com/rickb777/where/dialect"
 )
 
-var queryConstraintCases = []struct {
-	qc          where.QueryConstraint
-	expPostgres string
-}{
-	{nil, ""},
-	{where.OrderBy("foo"), ` ORDER BY "foo"`},
-	{where.OrderBy("foo", "bar"), ` ORDER BY "foo", "bar"`},
-	{where.OrderBy("foo").Asc(), ` ORDER BY "foo" ASC`},
-	{where.OrderBy("foo").Desc(), ` ORDER BY "foo" DESC`},
-	{where.OrderBy("foo", "bar").Desc(), ` ORDER BY "foo", "bar" DESC`},
-	{where.OrderBy("foo").OrderBy("bar"), ` ORDER BY "foo", "bar"`},
-	{where.OrderBy("foo").OrderBy("bar").Desc(), ` ORDER BY "foo", "bar" DESC`},
-	{where.OrderBy("foo", "bar").Desc(), ` ORDER BY "foo", "bar" DESC`},
-	{where.OrderBy("foo").Asc().OrderBy("bar").Desc(), ` ORDER BY "foo" ASC, "bar" DESC`},
-	{where.OrderBy("foo").Desc().OrderBy("bar").Asc().OrderBy("baz").Desc(), ` ORDER BY "foo" DESC, "bar" ASC, "baz" DESC`},
-	{where.Limit(0), ""},
-	{where.Limit(10), " LIMIT 10"},
-	{where.Offset(20), " OFFSET 20"},
-	{where.Limit(5).OrderBy("foo", "bar"), ` ORDER BY "foo", "bar" LIMIT 5`},
-	{where.OrderBy("foo").Desc().Limit(10).Offset(20), ` ORDER BY "foo" DESC LIMIT 10 OFFSET 20`},
+var queryConstraintCases = map[string]where.QueryConstraint{
+	"01":                              nil,
+	`02 ORDER BY "foo"`:               where.OrderBy("foo"),
+	`03 ORDER BY "foo", "bar"`:        where.OrderBy("foo", "bar"),
+	`04 ORDER BY "foo"`:               where.OrderBy("foo").Asc(),
+	`05 ORDER BY "foo" DESC`:          where.OrderBy("foo").Desc(),
+	`06 ORDER BY "foo", "bar", "baz"`: where.OrderBy("foo", "bar", "baz").Asc(),
+	`07 ORDER BY "foo" DESC, "bar" DESC, "baz" DESC`:   where.OrderBy("foo", "bar", "baz").Desc(),
+	`08 ORDER BY "foo", "bar", "baz"`:                  where.OrderBy("foo").OrderBy("bar").OrderBy("baz"),
+	`09 ORDER BY "foo" ASC, "bar" DESC, "baz" ASC`:     where.OrderBy("foo").OrderBy("bar").Desc().OrderBy("baz"),
+	`10 ORDER BY "foo" ASC, "bar" DESC`:                where.OrderBy("foo").Asc().OrderBy("bar").Desc(),
+	`11 ORDER BY "foo" ASC, "bar" DESC, "baz" ASC`:     where.OrderBy("foo").Asc().OrderBy("bar").Desc().OrderBy("baz").Asc(),
+	`12 ORDER BY "foo" DESC, "bar" ASC, "baz" DESC`:    where.OrderBy("foo").Desc().OrderBy("bar").Asc().OrderBy("baz").Desc(),
+	`13 ORDER BY "a", "b", "c", "d"`:                   where.OrderBy("a", "b").Asc().OrderBy("c", "d").Asc(),
+	`14 ORDER BY "a" DESC, "b" DESC, "c" ASC, "d" ASC`: where.OrderBy("a", "b").Desc().OrderBy("c", "d").Asc(),
+	`15 ORDER BY "a" ASC, "b" ASC, "c" DESC, "d" DESC`: where.OrderBy("a", "b").Asc().OrderBy("c", "d").Desc(),
+
+	`21`:                               where.Limit(0),
+	`22 LIMIT 10`:                      where.Limit(10),
+	`23 OFFSET 20`:                     where.Offset(20),
+	`24 ORDER BY "foo", "bar" LIMIT 5`: where.Limit(5).OrderBy("foo", "bar"),
+	`25 ORDER BY "foo" DESC LIMIT 10 OFFSET 20`: where.OrderBy("foo").Desc().Limit(10).Offset(20),
 }
 
 func TestQueryConstraint(t *testing.T) {
 	g := NewGomegaWithT(t)
 
-	for i, c := range queryConstraintCases {
+	for exp, c := range queryConstraintCases {
 		var sql string
 
-		if c.qc != nil {
-			sql = where.Build(c.qc, dialect.Sqlite)
+		if c != nil {
+			sql = where.Build(c, dialect.Sqlite)
 		}
 
-		g.Expect(sql).To(Equal(c.expPostgres), strconv.Itoa(i))
+		g.Expect(sql).To(Equal(exp[2:]), exp)
 	}
 }
 
 func BenchmarkQueryConstraint(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		for _, c := range queryConstraintCases {
-			if c.qc != nil {
-				_ = where.Build(c.qc, dialect.Sqlite)
+			if c != nil {
+				_ = where.Build(c, dialect.Sqlite)
 			}
 		}
 	}
@@ -74,7 +75,7 @@ func ExampleOrderBy() {
 	s := qc.Build(dialect.Sqlite)
 	fmt.Println(s)
 
-	// Output:  ORDER BY "foo", "bar" DESC, "baz" ASC LIMIT 10 OFFSET 20
+	// Output:  ORDER BY "foo" DESC, "bar" DESC, "baz" ASC LIMIT 10 OFFSET 20
 }
 
 func ExampleLimit() {
