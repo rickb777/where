@@ -11,7 +11,31 @@ import (
 // QueryConstraint is a value that is appended to a SELECT statement.
 type QueryConstraint interface {
 	fmt.Stringer
+
+	// OrderBy lists the column(s) by which the database will be asked to sort its results.
+	// The columns passed in here will be quoted according to the needs of the selected dialect.
+	OrderBy(column ...string) QueryConstraint
+
+	// Asc sets the sort order to be ascending for the columns specified previously,
+	// not including those already set.
+	Asc() QueryConstraint
+
+	// Desc sets the sort order to be descending for the columns specified previously,
+	// not including those already set.
+	Desc() QueryConstraint
+
+	// Limit sets the upper limit on the number of records to be returned.
+	Limit(n int) QueryConstraint
+
+	// Offset sets the offset into the result set; previous items will be discarded.
+	Offset(n int) QueryConstraint
+
+	// BuildTop constructs the SQL string using the given dialect. The only known dialect
+	// for which this is used is SQL-Server; otherwise it returns an empty string. Insert
+	// the returned value into your query between "SELECT [DISTINCT] " and the list of columns.
 	BuildTop(dialect.Dialect) string
+
+	// Build constructs the SQL string using the optional quoter or the default quoter.
 	Build(dialect.Dialect) string
 }
 
@@ -43,24 +67,24 @@ func Build(qc QueryConstraint, d dialect.Dialect) string {
 
 // OrderBy lists the column(s) by which the database will be asked to sort its results.
 // The columns passed in here will be quoted according to the quoter in use when built.
-func OrderBy(column ...string) *queryConstraint {
+func OrderBy(column ...string) QueryConstraint {
 	return &queryConstraint{orderBy: makeTerms(column)}
 }
 
 // Limit sets the upper limit on the number of records to be returned.
 // The default value, 0, suppresses any limit.
-func Limit(n int) *queryConstraint {
+func Limit(n int) QueryConstraint {
 	return &queryConstraint{limit: n}
 }
 
 // Offset sets the offset into the result set; previous items will be discarded.
-func Offset(n int) *queryConstraint {
+func Offset(n int) QueryConstraint {
 	return &queryConstraint{offset: n}
 }
 
 // OrderBy lists the column(s) by which the database will be asked to sort its results.
-// The columns passed in here will be quoted according to the needs of the current dialect.
-func (qc *queryConstraint) OrderBy(column ...string) *queryConstraint {
+// The columns passed in here will be quoted according to the needs of the selected dialect.
+func (qc *queryConstraint) OrderBy(column ...string) QueryConstraint {
 	// previous unset columns default to asc
 	for i := 0; i < len(qc.orderBy); i++ {
 		if qc.orderBy[i].dir == unset {
@@ -91,26 +115,26 @@ func (qc *queryConstraint) setDir(dir int) *queryConstraint {
 	return qc
 }
 
-// Asc sets the sort order to be ascending for all the columns specified previously,
+// Asc sets the sort order to be ascending for the columns specified previously,
 // not including those already set.
-func (qc *queryConstraint) Asc() *queryConstraint {
+func (qc *queryConstraint) Asc() QueryConstraint {
 	return qc.setDir(asc)
 }
 
-// Desc sets the sort order to be descending for all the columns specified previously,
+// Desc sets the sort order to be descending for the columns specified previously,
 // not including those already set.
-func (qc *queryConstraint) Desc() *queryConstraint {
+func (qc *queryConstraint) Desc() QueryConstraint {
 	return qc.setDir(desc)
 }
 
 // Limit sets the upper limit on the number of records to be returned.
-func (qc *queryConstraint) Limit(n int) *queryConstraint {
+func (qc *queryConstraint) Limit(n int) QueryConstraint {
 	qc.limit = n
 	return qc
 }
 
 // Offset sets the offset into the result set; previous items will be discarded.
-func (qc *queryConstraint) Offset(n int) *queryConstraint {
+func (qc *queryConstraint) Offset(n int) QueryConstraint {
 	qc.offset = n
 	return qc
 }

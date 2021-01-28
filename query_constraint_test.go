@@ -33,26 +33,42 @@ var queryConstraintCases = map[string]where.QueryConstraint{
 	`25 ORDER BY "foo" DESC LIMIT 10 OFFSET 20`: where.OrderBy("foo").Desc().Limit(10).Offset(20),
 }
 
-func TestQueryConstraint(t *testing.T) {
+var topConstraintCases = map[string]where.QueryConstraint{
+	`1`:          nil,
+	`2`:          where.Limit(0),
+	`3 TOP (10)`: where.Limit(10),
+	`4`:          where.Offset(20),
+	`5 TOP (5)`:  where.Limit(5).OrderBy("foo", "bar"),
+	`6 TOP (10)`: where.OrderBy("foo").Desc().Limit(10).Offset(20),
+}
+
+func TestQueryConstraint1(t *testing.T) {
 	g := NewGomegaWithT(t)
 
 	for exp, c := range queryConstraintCases {
-		var sql string
-
-		if c != nil {
-			sql = where.Build(c, dialect.Sqlite)
-		}
-
+		sql := where.Build(c, dialect.Sqlite)
 		g.Expect(sql).To(Equal(exp[2:]), exp)
+	}
+}
+
+func TestQueryConstraint2(t *testing.T) {
+	g := NewGomegaWithT(t)
+
+	for exp, c := range queryConstraintCases {
+		if c != nil {
+			sql := c.Build(dialect.Sqlite)
+			g.Expect(sql).To(Equal(exp[2:]), exp)
+
+			sql = c.String()
+			g.Expect(sql).To(Equal(exp[2:]), exp)
+		}
 	}
 }
 
 func BenchmarkQueryConstraint(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		for _, c := range queryConstraintCases {
-			if c != nil {
-				_ = where.Build(c, dialect.Sqlite)
-			}
+			_ = where.Build(c, dialect.Sqlite)
 		}
 	}
 }
@@ -60,13 +76,29 @@ func BenchmarkQueryConstraint(b *testing.B) {
 func TestQueryConstraint_SqlServer(t *testing.T) {
 	g := NewGomegaWithT(t)
 
-	qc := where.OrderBy("foo").Desc().OrderBy("bar").Asc().OrderBy("baz").Desc().Limit(10).Offset(5)
+	for exp, qc := range topConstraintCases {
+		top := where.BuildTop(qc, dialect.SqlServer)
+		g.Expect(top).To(Equal(exp[1:]), exp)
+	}
+
+	for exp, qc := range topConstraintCases {
+		if qc != nil {
+			top := qc.BuildTop(dialect.SqlServer)
+			g.Expect(top).To(Equal(exp[1:]), exp)
+		}
+	}
+}
+
+func TestNilQueryConstraint_SqlServer(t *testing.T) {
+	g := NewGomegaWithT(t)
+
+	var qc where.QueryConstraint
 
 	top := where.BuildTop(qc, dialect.SqlServer)
 	sql := where.Build(qc, dialect.SqlServer)
 
-	g.Expect(top).To(Equal(" TOP (10)"))
-	g.Expect(sql).To(Equal(` ORDER BY "foo" DESC, "bar" ASC, "baz" DESC OFFSET 5`))
+	g.Expect(top).To(Equal(""))
+	g.Expect(sql).To(Equal(""))
 }
 
 func ExampleOrderBy() {
