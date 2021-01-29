@@ -22,8 +22,8 @@ func NotNull(column string) Expression {
 //
 //   Literal("age", " > 45")
 //
-// Be careful not to allow injection attacks by including a string from an external source
-// in the predicate.
+// Be careful not to allow injection attacks: do not include a string from an external
+// source in the column or predicate.
 func Literal(column, predicate string) Expression {
 	return Condition{Column: column, Predicate: predicate}
 }

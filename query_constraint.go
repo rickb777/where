@@ -67,6 +67,8 @@ func Build(qc QueryConstraint, d dialect.Dialect) string {
 
 // OrderBy lists the column(s) by which the database will be asked to sort its results.
 // The columns passed in here will be quoted according to the quoter in use when built.
+// Be careful not to allow injection attacks: do not include a string from an external
+// source in the columns.
 func OrderBy(column ...string) QueryConstraint {
 	return &queryConstraint{orderBy: makeTerms(column)}
 }
@@ -84,6 +86,8 @@ func Offset(n int) QueryConstraint {
 
 // OrderBy lists the column(s) by which the database will be asked to sort its results.
 // The columns passed in here will be quoted according to the needs of the selected dialect.
+// Be careful not to allow injection attacks: do not include a string from an external
+// source in the columns.
 func (qc *queryConstraint) OrderBy(column ...string) QueryConstraint {
 	// previous unset columns default to asc
 	for i := 0; i < len(qc.orderBy); i++ {
