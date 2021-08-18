@@ -10,12 +10,12 @@ import (
 )
 
 var queryConstraintCases = map[string]where.QueryConstraint{
-	"01":                              nil,
-	`02 ORDER BY "foo"`:               where.OrderBy("foo"),
-	`03 ORDER BY "foo", "bar"`:        where.OrderBy("foo", "bar"),
-	`04 ORDER BY "foo"`:               where.OrderBy("foo").Asc(),
-	`05 ORDER BY "foo" DESC`:          where.OrderBy("foo").Desc(),
-	`06 ORDER BY "foo", "bar", "baz"`: where.OrderBy("foo", "bar", "baz").Asc(),
+	"01":                                               nil,
+	`02 ORDER BY "foo"`:                                where.OrderBy("foo"),
+	`03 ORDER BY "foo", "bar"`:                         where.OrderBy("foo", "bar"),
+	`04 ORDER BY "foo" NULLS FIRST`:                    where.OrderBy("foo").Asc().NullsFirst(),
+	`05 ORDER BY "foo" DESC NULLS FIRST`:               where.OrderBy("foo").Desc().NullsFirst(),
+	`06 ORDER BY "foo", "bar", "baz"`:                  where.OrderBy("foo", "bar", "baz").Asc(),
 	`07 ORDER BY "foo" DESC, "bar" DESC, "baz" DESC`:   where.OrderBy("foo", "bar", "baz").Desc(),
 	`08 ORDER BY "foo", "bar", "baz"`:                  where.OrderBy("foo").OrderBy("bar").OrderBy("baz"),
 	`09 ORDER BY "foo" ASC, "bar" DESC, "baz" ASC`:     where.OrderBy("foo").OrderBy("bar").Desc().OrderBy("baz"),
@@ -26,11 +26,11 @@ var queryConstraintCases = map[string]where.QueryConstraint{
 	`14 ORDER BY "a" DESC, "b" DESC, "c" ASC, "d" ASC`: where.OrderBy("a", "b").Desc().OrderBy("c", "d").Asc(),
 	`15 ORDER BY "a" ASC, "b" ASC, "c" DESC, "d" DESC`: where.OrderBy("a", "b").Asc().OrderBy("c", "d").Desc(),
 
-	`21`:                               where.Limit(0),
+	`21`:                               where.Limit(0).NullsLast(),
 	`22 LIMIT 10`:                      where.Limit(10),
 	`23 OFFSET 20`:                     where.Offset(20),
 	`24 ORDER BY "foo", "bar" LIMIT 5`: where.Limit(5).OrderBy("foo", "bar"),
-	`25 ORDER BY "foo" DESC LIMIT 10 OFFSET 20`: where.OrderBy("foo").Desc().Limit(10).Offset(20),
+	`25 ORDER BY "foo" DESC NULLS LAST LIMIT 10 OFFSET 20`: where.OrderBy("foo").Desc().Limit(10).Offset(20).NullsLast(),
 }
 
 var topConstraintCases = map[string]where.QueryConstraint{

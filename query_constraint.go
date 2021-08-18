@@ -24,6 +24,16 @@ type QueryConstraint interface {
 	// not including those already set.
 	Desc() QueryConstraint
 
+	// NullsFirst can be used to determine whether nulls appear before non-null values
+	// in the sort ordering. By default, null values sort as if larger than any non-null value;
+	// that is, NULLS FIRST is the default for DESC order, and NULLS LAST otherwise.
+	NullsFirst() QueryConstraint
+
+	// NullsLast can be used to determine whether nulls appear after non-null values
+	// in the sort ordering. By default, null values sort as if larger than any non-null value;
+	// that is, NULLS FIRST is the default for DESC order, and NULLS LAST otherwise.
+	NullsLast() QueryConstraint
+
 	// Limit sets the upper limit on the number of records to be returned.
 	Limit(n int) QueryConstraint
 
@@ -129,6 +139,22 @@ func (qc *queryConstraint) Asc() QueryConstraint {
 // not including those already set.
 func (qc *queryConstraint) Desc() QueryConstraint {
 	return qc.setDir(desc)
+}
+
+// NullsFirst can be used to determine whether nulls appear before non-null values
+// in the sort ordering. By default, null values sort as if larger than any non-null value;
+// that is, NULLS FIRST is the default for DESC order, and NULLS LAST otherwise.
+func (qc *queryConstraint) NullsFirst() QueryConstraint {
+	qc.nulls = first
+	return qc
+}
+
+// NullsLast can be used to determine whether nulls appear after non-null values
+// in the sort ordering. By default, null values sort as if larger than any non-null value;
+// that is, NULLS FIRST is the default for DESC order, and NULLS LAST otherwise.
+func (qc *queryConstraint) NullsLast() QueryConstraint {
+	qc.nulls = last
+	return qc
 }
 
 // Limit sets the upper limit on the number of records to be returned.

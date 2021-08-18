@@ -11,12 +11,16 @@ const (
 	unset = 0
 	asc   = 1
 	desc  = 2
+	first = 3
+	last  = 4
 )
 
 var ascDesc = []string{
 	" ASC",
 	" ASC",
 	" DESC",
+	" FIRST",
+	" LAST",
 }
 
 type orderingTerm struct {
@@ -26,6 +30,7 @@ type orderingTerm struct {
 
 type queryConstraint struct {
 	orderBy       []orderingTerm
+	nulls         int
 	limit, offset int
 }
 
@@ -56,6 +61,13 @@ func (qc *queryConstraint) Build(d dialect.Dialect) string {
 				b.WriteString(ascDesc[col.dir])
 			}
 			sep = ", "
+		}
+
+		switch qc.nulls {
+		case first:
+			b.WriteString(" NULLS FIRST")
+		case last:
+			b.WriteString(" NULLS LAST")
 		}
 	}
 
