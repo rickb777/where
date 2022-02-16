@@ -80,6 +80,13 @@ var buildWhereClauseHappyCases = []struct {
 	},
 
 	{
+		nameEqFredInt.And(where.NoOp()),
+		` WHERE ("name"=?)`,
+		`("name"='Fred')`,
+		[]interface{}{"Fred"},
+	},
+
+	{
 		nameEqFredInt.And(where.Gt("age", 10)),
 		` WHERE ("name"=?) AND ("age">?)`,
 		`("name"='Fred') AND ("age">10)`,
@@ -185,6 +192,13 @@ var buildWhereClauseHappyCases = []struct {
 	},
 
 	{
+		nameEqFredInt.Or(nameEqJohnInt),
+		` WHERE ("name"=?) OR ("name"=?)`,
+		`("name"='Fred') OR ("name"='John')`,
+		[]interface{}{"Fred", "John"},
+	},
+
+	{
 		where.Not(nameEqFredInt),
 		` WHERE NOT ("name"=?)`,
 		`NOT ("name"='Fred')`,
@@ -227,6 +241,13 @@ var buildWhereClauseHappyCases = []struct {
 	},
 
 	{
+		where.Or(nameEqFredInt, nil, ageLt10Int),
+		` WHERE ("name"=?) OR ("age"<?)`,
+		`("name"='Fred') OR ("age"<10)`,
+		[]interface{}{"Fred", 10},
+	},
+
+	{
 		where.And(nameEqFredInt).And(where.And(ageLt10Int)),
 		` WHERE ("name"=?) AND ("age"<?)`,
 		`("name"='Fred') AND ("age"<10)`,
@@ -234,10 +255,17 @@ var buildWhereClauseHappyCases = []struct {
 	},
 
 	{
-		where.Or(nameEqFredInt, nil, ageLt10Int),
-		` WHERE ("name"=?) OR ("age"<?)`,
-		`("name"='Fred') OR ("age"<10)`,
-		[]interface{}{"Fred", 10},
+		where.Eq("a", 1).And(where.Eq("b", 2)).And(where.And(where.Eq("c", 3), where.Eq("d", 4))),
+		` WHERE ("a"=?) AND ("b"=?) AND ("c"=?) AND ("d"=?)`,
+		`("a"=1) AND ("b"=2) AND ("c"=3) AND ("d"=4)`,
+		[]interface{}{1, 2, 3, 4},
+	},
+
+	{
+		where.Eq("a", 1).Or(where.Eq("b", 2)).Or(where.Or(where.Eq("c", 3), where.Eq("d", 4))),
+		` WHERE ("a"=?) OR ("b"=?) OR ("c"=?) OR ("d"=?)`,
+		`("a"=1) OR ("b"=2) OR ("c"=3) OR ("d"=4)`,
+		[]interface{}{1, 2, 3, 4},
 	},
 
 	{
@@ -269,6 +297,20 @@ var buildWhereClauseHappyCases = []struct {
 	},
 
 	{
+		where.Not(where.NoOp()),
+		"",
+		"",
+		nil,
+	},
+
+	{
+		where.Not(nil),
+		"",
+		"",
+		nil,
+	},
+
+	{
 		where.Or(nil).Or(where.NoOp()).And(where.NoOp()),
 		"",
 		"",
@@ -287,16 +329,16 @@ func TestBuildWhereClause_happyCases(t *testing.T) {
 	g := NewGomegaWithT(t)
 
 	for i, c := range buildWhereClauseHappyCases {
-		info := fmt.Sprintf("%d: %s", i, c.expSQL)
+		t.Logf("%d: %s", i, c.expSQL)
 
 		sql, args := where.Where(c.wh)
 
-		g.Expect(sql).To(Equal(c.expSQL), info)
-		g.Expect(args).To(Equal(c.args), info)
+		g.Expect(sql).To(Equal(c.expSQL))
+		g.Expect(args).To(Equal(c.args))
 
 		s := c.wh.String()
 
-		g.Expect(s).To(Equal(c.expString), info)
+		g.Expect(s).To(Equal(c.expString))
 	}
 }
 

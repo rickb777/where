@@ -5,18 +5,18 @@ import (
 	"strings"
 )
 
-const and = " AND "
-const or = " OR "
-
-// Null returns an 'IS NULL' condition on a column.
-func Null(column string) Expression {
-	return Condition{Column: column, Predicate: " IS NULL", Args: array()}
-}
-
-// NotNull returns an 'IS NOT NULL' condition on a column. It's also possible to use Not(Null(...)).
-func NotNull(column string) Expression {
-	return Condition{Column: column, Predicate: " IS NOT NULL", Args: array()}
-}
+const (
+	PredicateIsNull               = " IS NULL"
+	PredicateIsNotNull            = " IS NOT NULL"
+	PredicateEqualTo              = "=?"
+	PredicateNotEqualTo           = "<>?"
+	PredicateGreaterThan          = ">?"
+	PredicateGreaterThanOrEqualTo = ">=?"
+	PredicateLessThan             = "<?"
+	PredicateLessThanOrEqualTo    = "<=?"
+	PredicateBetween              = " BETWEEN ? AND ?"
+	PredicateLike                 = " LIKE ?"
+)
 
 // Literal returns a literal condition on a column. For example
 //
@@ -24,8 +24,23 @@ func NotNull(column string) Expression {
 //
 // Be careful not to allow injection attacks: do not include a string from an external
 // source in the column or predicate.
-func Literal(column, predicate string) Expression {
-	return Condition{Column: column, Predicate: predicate}
+//
+// This function is the basis for all the other predicates except In/InSlice.
+func Literal(column, predicate string, value ...interface{}) Expression {
+	if len(value) == 0 {
+		return Condition{Column: column, Predicate: predicate}
+	}
+	return Condition{Column: column, Predicate: predicate, Args: value}
+}
+
+// Null returns an 'IS NULL' condition on a column.
+func Null(column string) Expression {
+	return Literal(column, PredicateIsNull)
+}
+
+// NotNull returns an 'IS NOT NULL' condition on a column. It's also possible to use Not(Null(...)).
+func NotNull(column string) Expression {
+	return Literal(column, PredicateIsNotNull)
 }
 
 // Eq returns an equality condition on a column.
@@ -33,7 +48,7 @@ func Literal(column, predicate string) Expression {
 // A '?' placeholder is used so it may be necessary to replace placeholders in the
 // resulting query, e.g using 'dialect.ReplacePlaceholdersWithNumbers(query)'.
 func Eq(column string, value interface{}) Expression {
-	return Condition{Column: column, Predicate: "=?", Args: array(value)}
+	return Literal(column, PredicateEqualTo, value)
 }
 
 // NotEq returns a not equal condition on a column.
@@ -41,7 +56,7 @@ func Eq(column string, value interface{}) Expression {
 // A '?' placeholder is used so it may be necessary to replace placeholders in the
 // resulting query, e.g using 'dialect.ReplacePlaceholdersWithNumbers(query)'.
 func NotEq(column string, value interface{}) Expression {
-	return Condition{Column: column, Predicate: "<>?", Args: array(value)}
+	return Literal(column, PredicateNotEqualTo, value)
 }
 
 // Gt returns a greater than condition on a column.
@@ -49,7 +64,7 @@ func NotEq(column string, value interface{}) Expression {
 // A '?' placeholder is used so it may be necessary to replace placeholders in the
 // resulting query, e.g using 'dialect.ReplacePlaceholdersWithNumbers(query)'.
 func Gt(column string, value interface{}) Expression {
-	return Condition{Column: column, Predicate: ">?", Args: array(value)}
+	return Literal(column, PredicateGreaterThan, value)
 }
 
 // GtEq returns a greater than or equal condition on a column.
@@ -57,7 +72,7 @@ func Gt(column string, value interface{}) Expression {
 // A '?' placeholder is used so it may be necessary to replace placeholders in the
 // resulting query, e.g using 'dialect.ReplacePlaceholdersWithNumbers(query)'.
 func GtEq(column string, value interface{}) Expression {
-	return Condition{Column: column, Predicate: ">=?", Args: array(value)}
+	return Literal(column, PredicateGreaterThanOrEqualTo, value)
 }
 
 // Lt returns a less than condition on a column.
@@ -65,7 +80,7 @@ func GtEq(column string, value interface{}) Expression {
 // A '?' placeholder is used so it may be necessary to replace placeholders in the
 // resulting query, e.g using 'dialect.ReplacePlaceholdersWithNumbers(query)'.
 func Lt(column string, value interface{}) Expression {
-	return Condition{Column: column, Predicate: "<?", Args: array(value)}
+	return Literal(column, PredicateLessThan, value)
 }
 
 // LtEq returns a less than or equal than condition on a column.
@@ -73,7 +88,7 @@ func Lt(column string, value interface{}) Expression {
 // A '?' placeholder is used so it may be necessary to replace placeholders in the
 // resulting query, e.g using 'dialect.ReplacePlaceholdersWithNumbers(query)'.
 func LtEq(column string, value interface{}) Expression {
-	return Condition{Column: column, Predicate: "<=?", Args: array(value)}
+	return Literal(column, PredicateLessThanOrEqualTo, value)
 }
 
 // Between returns a between condition on a column.
@@ -81,7 +96,7 @@ func LtEq(column string, value interface{}) Expression {
 // Two '?' placeholders are used so it may be necessary to replace placeholders in the
 // resulting query, e.g using 'dialect.ReplacePlaceholdersWithNumbers(query)'.
 func Between(column string, a, b interface{}) Expression {
-	return Condition{Column: column, Predicate: " BETWEEN ? AND ?", Args: array(a, b)}
+	return Literal(column, PredicateBetween, a, b)
 }
 
 // Like returns a pattern-matching condition on a column. Be careful: this can hurt performance.
@@ -89,7 +104,7 @@ func Between(column string, a, b interface{}) Expression {
 // A '?' placeholder is used so it may be necessary to replace placeholders in the
 // resulting query, e.g using 'dialect.ReplacePlaceholdersWithNumbers(query)'.
 func Like(column string, pattern string) Expression {
-	return Condition{Column: column, Predicate: " LIKE ?", Args: array(pattern)}
+	return Literal(column, PredicateLike, pattern)
 }
 
 // In returns an 'IN' condition on a column.
@@ -98,6 +113,8 @@ func Like(column string, pattern string) Expression {
 //
 // Some '?' placeholders are used so it is necessary to replace placeholders in the
 // resulting query according to SQL dialect, e.g using 'dialect.ReplacePlaceholdersWithNumbers(query)'.
+//
+// Note that this does not reflection, unlike InSlice.
 func In(column string, values ...interface{}) Expression {
 	if len(values) == 0 {
 		return NoOp()
@@ -142,6 +159,8 @@ func In(column string, values ...interface{}) Expression {
 //
 // Some '?' placeholders are used so it is necessary to replace placeholders in the
 // resulting query according to SQL dialect, e.g using 'dialect.ReplacePlaceholdersWithNumbers(query)'.
+//
+// Note that this uses reflection, unlike In.
 func InSlice(column string, arg interface{}) Expression {
 	switch arg.(type) {
 	case nil:
@@ -195,8 +214,16 @@ func InSlice(column string, arg interface{}) Expression {
 
 //-------------------------------------------------------------------------------------------------
 
+const (
+	and = " AND "
+	or  = " OR "
+)
+
 // Not negates an expression.
 func Not(el Expression) Expression {
+	if el == nil {
+		return NoOp()
+	}
 	return not{expression: el}
 }
 
@@ -294,8 +321,4 @@ func newClause(conj string, exp ...Expression) Expression {
 		return clause.wheres[0] // simplify the result
 	}
 	return clause
-}
-
-func array(value ...interface{}) []interface{} {
-	return value
 }
