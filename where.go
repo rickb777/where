@@ -23,14 +23,14 @@ type Expression interface {
 }
 
 // Where constructs the sql clause beginning "WHERE ...". It will contain '?' style placeholders;
-// these need to be passed through the relevant quote ReplacePlaceholders processing.
+// these need to be passed through the relevant dialect.ReplacePlaceholders processing.
 // A quoter may optionally be supplied, otherwise the Default Quoter is used.
 func Where(wh Expression, q ...quote.Quoter) (string, []interface{}) {
 	return build(whereAdverb, wh, q...)
 }
 
 // Having constructs the sql clause beginning "HAVING ...". It will contain '?' style placeholders;
-// these need to be passed through the relevant quote ReplacePlaceholders processing.
+// these need to be passed through the relevant dialect.ReplacePlaceholders processing.
 // A quoter may optionally be supplied, otherwise the Default Quoter is used.
 func Having(wh Expression, q ...quote.Quoter) (string, []interface{}) {
 	return build(havingVerb, wh, q...)
@@ -77,11 +77,13 @@ func (not not) String() string {
 // This can also be constructed directly, which will be useful for non-portable
 // cases, such as Postgresql 'SIMILAR TO'
 //
-//	expr := where.Condition{Column: "name", Predicate: " SIMILAR TO", Args: []interface{}{pattern}}
+//	expr := where.Condition{Column: "name", Predicate: " SIMILAR TO ?", Args: []interface{}{pattern}}
 //
 // Also for literal values (taking care to protect against injection attacks)
 //
 //	expr := where.Condition{Column: "age", Predicate: " = 47", Args: nil}
+//
+// Column can be left blank; this allows the predicate to be a sub-query such as EXISTS(...).
 //
 // See Literal.
 type Condition struct {

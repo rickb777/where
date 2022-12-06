@@ -282,12 +282,14 @@ func (wh Clause) conjoin(exp Expression, conj string) Expression {
 }
 
 // And combines two clauses into a clause that requires they are both true.
+// Parentheses will be inserted to preserve the calling order.
 // SQL implementation note: AND has higher precedence than OR.
 func (wh Clause) And(exp Expression) Expression {
 	return wh.conjoin(exp, and)
 }
 
 // Or combines two clauses into a clause that requires either is true.
+// Parentheses will be inserted to preserve the calling order.
 // SQL implementation note: AND has higher precedence than OR.
 func (wh Clause) Or(exp Expression) Expression {
 	return wh.conjoin(exp, or)

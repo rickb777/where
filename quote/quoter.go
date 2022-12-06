@@ -68,7 +68,7 @@ type quoter string
 //
 // For better performance, use QuoteW instead of Quote wherever possible.
 func (q quoter) Quote(identifier string) string {
-	if len(q) == 0 {
+	if len(q) == 0 || len(identifier) == 0 {
 		return identifier
 	}
 
@@ -94,7 +94,7 @@ func (q quoter) QuoteN(identifiers []string) []string {
 // QuoteW renders an identifier within quote marks. If the identifier consists of both a
 // prefix and a name, each part is quoted separately.
 func (q quoter) QuoteW(w io.StringWriter, identifier string) (n int, err error) {
-	if len(q) == 0 {
+	if len(q) == 0 || len(identifier) == 0 {
 		return w.WriteString(identifier)
 	} else {
 		elements := strings.Split(identifier, ".")

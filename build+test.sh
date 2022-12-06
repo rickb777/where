@@ -18,14 +18,9 @@ if ! type -p shadow; then
   v go install golang.org/x/tools/go/analysis/passes/shadow/cmd/shadow
 fi
 
-if ! type -p goreturns; then
-  v go install github.com/sqs/goreturns
-fi
-
 ### Build Phase 1 ###
 
 v go test ./...
-v goreturns -l -w *.go */*.go
 v gofmt -l -w *.go */*.go
 v go vet ./...
 v shadow -strict ./...
