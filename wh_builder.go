@@ -20,7 +20,7 @@ const (
 
 // Literal returns a literal condition on a column. For example
 //
-//   Literal("age", " > 45")
+//	Literal("age", " > 45")
 //
 // Be careful not to allow injection attacks: do not include a string from an external
 // source in the column or predicate.

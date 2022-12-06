@@ -1,6 +1,7 @@
 // Package quote augments SQL strings by quoting identifiers according to three common
 // variants: back-ticks used by MySQL, double-quotes used in ANSI SQL (PostgreSQL etc),
-// or no quotes at all.
+// or no quotes at all. For prefixed identifiers containing a dot ('.'), the quote
+// marks are applied separately to the prefix and the identifier itself.
 package quote
 
 import (
@@ -8,8 +9,8 @@ import (
 	"strings"
 )
 
-// Quoter wraps identifiers in quote marks. Compound identifiers (i.e. those with an alias prefix)
-// are handled according to SQL grammar.
+// Quoter wraps identifiers in quote marks. Compound identifiers, i.e. those with an alias
+// prefix such as "excluded"."created_at", are handled according to SQL grammar.
 type Quoter interface {
 	Quote(identifier string) string
 	QuoteN(identifiers []string) []string
@@ -38,14 +39,14 @@ var (
 	DefaultQuoter = AnsiQuoter
 )
 
-// NewQuoter gets a quoter using arbitrary quote marks.
-func NewQuoter(mark string) Quoter {
+// New gets a quoter using arbitrary quote marks.
+func New(mark string) Quoter {
 	return quoter(mark)
 }
 
-// PickQuoter picks a quoter based on the names "ansi", "mysql" or "none".
+// Pick picks a quoter based on the names "ansi", "mysql" or "none".
 // If none match, then nil is returned.
-func PickQuoter(name string) Quoter {
+func Pick(name string) Quoter {
 	switch name {
 	case "ansi":
 		return AnsiQuoter
@@ -64,6 +65,7 @@ type quoter string
 
 // Quote renders an identifier within quote marks. If the identifier consists of both a
 // prefix and a name, each part is quoted separately. Any i/o errors are silently dropped.
+//
 // For better performance, use QuoteW instead of Quote wherever possible.
 func (q quoter) Quote(identifier string) string {
 	if len(q) == 0 {

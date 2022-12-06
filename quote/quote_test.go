@@ -9,7 +9,7 @@ import (
 
 func TestAnsiQuote(t *testing.T) {
 	g := NewGomegaWithT(t)
-	result := PickQuoter("ansi").QuoteN([]string{"a", "bb", "ccc.ddd"})
+	result := Pick("ansi").QuoteN([]string{"a", "bb", "ccc.ddd"})
 	g.Expect(result).To(HaveLen(3))
 	g.Expect(result[0]).To(Equal(`"a"`))
 	g.Expect(result[1]).To(Equal(`"bb"`))
@@ -18,7 +18,7 @@ func TestAnsiQuote(t *testing.T) {
 
 func TestMysqlQuote(t *testing.T) {
 	g := NewGomegaWithT(t)
-	result := PickQuoter("mysql").QuoteN([]string{"a", "bb", "ccc.ddd"})
+	result := Pick("mysql").QuoteN([]string{"a", "bb", "ccc.ddd"})
 	g.Expect(result).To(HaveLen(3))
 	g.Expect(result[0]).To(Equal("`a`"))
 	g.Expect(result[1]).To(Equal("`bb`"))
@@ -27,16 +27,16 @@ func TestMysqlQuote(t *testing.T) {
 
 func TestNoQuote(t *testing.T) {
 	g := NewGomegaWithT(t)
-	result := PickQuoter("none").QuoteN([]string{"a", "bb", "ccc.ddd"})
+	result := Pick("none").QuoteN([]string{"a", "bb", "ccc.ddd"})
 	g.Expect(result).To(HaveLen(3))
 	g.Expect(result[0]).To(Equal(`a`))
 	g.Expect(result[1]).To(Equal(`bb`))
 	g.Expect(result[2]).To(Equal(`ccc.ddd`))
 
-	r2 := NewQuoter("").Quote("foo")
+	r2 := New("").Quote("foo")
 	g.Expect(r2).To(Equal(`foo`))
 
 	b := &strings.Builder{}
-	NewQuoter("").QuoteW(b, "foo")
+	New("").QuoteW(b, "foo")
 	g.Expect(b.String()).To(Equal(`foo`))
 }

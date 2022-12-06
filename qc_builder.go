@@ -5,6 +5,7 @@ import (
 	"strings"
 
 	"github.com/rickb777/where/dialect"
+	"github.com/rickb777/where/quote"
 )
 
 const (
@@ -37,10 +38,11 @@ type queryConstraint struct {
 var _ QueryConstraint = &queryConstraint{}
 
 // Build constructs the SQL string using the optional quoter or the default quoter.
-func (qc *queryConstraint) Build(d dialect.Dialect) string {
-	q := d.Config().Quoter
+func (qc *queryConstraint) Build(d dialect.Dialect, qq ...quote.Quoter) string {
 	b := new(strings.Builder)
 	b.Grow(qc.estimateStringLength())
+
+	q := pickQuoter(qq)
 
 	if len(qc.orderBy) > 0 {
 		b.WriteString(" ORDER BY")
@@ -121,5 +123,5 @@ func (qc *queryConstraint) estimateStringLength() (n int) {
 }
 
 func (qc *queryConstraint) String() string {
-	return qc.Build(dialect.DefaultDialect)
+	return qc.Build(dialect.DefaultDialect, quote.DefaultQuoter)
 }

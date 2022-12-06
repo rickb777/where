@@ -46,7 +46,7 @@ type QueryConstraint interface {
 	BuildTop(dialect.Dialect) string
 
 	// Build constructs the SQL string using the optional quoter or the default quoter.
-	Build(dialect.Dialect) string
+	Build(dialect.Dialect, ...quote.Quoter) string
 }
 
 func pickQuoter(quoter []quote.Quoter) quote.Quoter {
@@ -68,11 +68,12 @@ func BuildTop(qc QueryConstraint, d dialect.Dialect) string {
 }
 
 // Build builds a query constraint. It allows nil values.
-func Build(qc QueryConstraint, d dialect.Dialect) string {
+// A quoter can be provided, otherwise quote.NoQuoter is used.
+func Build(qc QueryConstraint, d dialect.Dialect, q ...quote.Quoter) string {
 	if qc == nil {
 		return ""
 	}
-	return qc.Build(d)
+	return qc.Build(d, pickQuoter(q))
 }
 
 // OrderBy lists the column(s) by which the database will be asked to sort its results.

@@ -77,11 +77,11 @@ func (not not) String() string {
 // This can also be constructed directly, which will be useful for non-portable
 // cases, such as Postgresql 'SIMILAR TO'
 //
-//     expr := where.Condition{Column: "name", Predicate: " SIMILAR TO", Args: []interface{}{pattern}}
+//	expr := where.Condition{Column: "name", Predicate: " SIMILAR TO", Args: []interface{}{pattern}}
 //
 // Also for literal values (taking care to protect against injection attacks)
 //
-//     expr := where.Condition{Column: "age", Predicate: " = 47", Args: nil}
+//	expr := where.Condition{Column: "age", Predicate: " = 47", Args: nil}
 //
 // See Literal.
 type Condition struct {
