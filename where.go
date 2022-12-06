@@ -5,6 +5,7 @@ import (
 	"reflect"
 	"strings"
 
+	"github.com/rickb777/where/dialect"
 	"github.com/rickb777/where/quote"
 )
 
@@ -22,31 +23,70 @@ type Expression interface {
 	build(q quote.Quoter) (string, []interface{})
 }
 
-// Where constructs the sql clause beginning "WHERE ...". It will contain '?' style placeholders;
-// these need to be passed through the relevant dialect.ReplacePlaceholders processing.
-// A quoter may optionally be supplied, otherwise the Default Quoter is used.
-func Where(wh Expression, q ...quote.Quoter) (string, []interface{}) {
-	return build(whereAdverb, wh, q...)
+// Where constructs the sql clause beginning "WHERE ...".
+// Optional parameters may be supplied
+//
+//   - a quoter may be supplied, otherwise quote.DefaultQuoter is used.
+//   - a dialect.Dialect or a dialect.PlaceholderStyle may be supplied, in whoch
+//     case all '?' placeholders will be replaced accordingly, counting from 1.
+//
+// Unless a dialect.PlaceholderStyle is supplied, the result will contain '?' style placeholders;
+// these may need to be passed through the relevant dialect.ReplacePlaceholders processing.
+func Where(wh Expression, p ...any) (string, []interface{}) {
+	return build(whereAdverb, wh, p...)
 }
 
-// Having constructs the sql clause beginning "HAVING ...". It will contain '?' style placeholders;
-// these need to be passed through the relevant dialect.ReplacePlaceholders processing.
-// A quoter may optionally be supplied, otherwise the Default Quoter is used.
-func Having(wh Expression, q ...quote.Quoter) (string, []interface{}) {
-	return build(havingVerb, wh, q...)
+// Having constructs the sql clause beginning "HAVING ...".
+// Optional parameters may be supplied
+//
+//   - a quoter may be supplied, otherwise quote.DefaultQuoter is used.
+//   - a dialect.Dialect or a dialect.PlaceholderStyle may be supplied, in whoch
+//     case all '?' placeholders will be replaced accordingly, counting from 1.
+//
+// Unless a dialect.PlaceholderStyle is supplied, the result will contain '?' style placeholders;
+// these may need to be passed through the relevant dialect.ReplacePlaceholders processing.
+func Having(wh Expression, p ...any) (string, []interface{}) {
+	return build(havingVerb, wh, p...)
 }
 
 // build constructs the sql clause beginning with some verb/adverb. It will contain '?' style placeholders;
 // these need to be passed through the relevant quote ReplacePlaceholders processing.
-func build(adverb string, wh Expression, quoter ...quote.Quoter) (string, []interface{}) {
+func build(adverb string, wh Expression, param ...any) (string, []interface{}) {
 	if wh == nil {
 		return "", nil
 	}
-	q := pickQuoter(quoter)
+
+	q := quote.DefaultQuoter
+
+loop1:
+	for _, p := range param {
+		switch x := p.(type) {
+		case quote.Quoter:
+			q = x
+			break loop1
+		case dialect.PlaceholderStyle:
+		default:
+			panic(fmt.Sprintf("unsupported %T %v", p, p))
+		}
+	}
+
 	sql, args := wh.build(q)
 	if sql == "" {
 		return "", nil
 	}
+
+loop2:
+	for _, p := range param {
+		switch x := p.(type) {
+		case dialect.Dialect:
+			sql = dialect.ReplacePlaceholders(sql, x.Placeholder())
+			break loop2
+		case dialect.PlaceholderStyle:
+			sql = dialect.ReplacePlaceholders(sql, x)
+			break loop2
+		}
+	}
+
 	return adverb + sql, args
 }
 

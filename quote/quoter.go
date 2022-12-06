@@ -36,7 +36,7 @@ var (
 	// DefaultQuoter is used by default.
 	//
 	// Change this to affect the default setting for every SQL construction function.
-	DefaultQuoter = AnsiQuoter
+	DefaultQuoter = NoQuoter
 )
 
 // New gets a quoter using arbitrary quote marks.

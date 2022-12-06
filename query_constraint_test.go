@@ -2,35 +2,40 @@ package where_test
 
 import (
 	"fmt"
+	"strings"
 	"testing"
 
 	. "github.com/onsi/gomega"
 	"github.com/rickb777/where"
 	"github.com/rickb777/where/dialect"
+	"github.com/rickb777/where/quote"
 )
 
-var queryConstraintCases = map[string]where.QueryConstraint{
-	"01":                                               nil,
-	`02 ORDER BY "foo"`:                                where.OrderBy("foo"),
-	`03 ORDER BY "foo", "bar"`:                         where.OrderBy("foo", "bar"),
-	`04 ORDER BY "foo" NULLS FIRST`:                    where.OrderBy("foo").Asc().NullsFirst(),
-	`05 ORDER BY "foo" DESC NULLS FIRST`:               where.OrderBy("foo").Desc().NullsFirst(),
-	`06 ORDER BY "foo", "bar", "baz"`:                  where.OrderBy("foo", "bar", "baz").Asc(),
-	`07 ORDER BY "foo" DESC, "bar" DESC, "baz" DESC`:   where.OrderBy("foo", "bar", "baz").Desc(),
-	`08 ORDER BY "foo", "bar", "baz"`:                  where.OrderBy("foo").OrderBy("bar").OrderBy("baz"),
-	`09 ORDER BY "foo" ASC, "bar" DESC, "baz" ASC`:     where.OrderBy("foo").OrderBy("bar").Desc().OrderBy("baz"),
-	`10 ORDER BY "foo" ASC, "bar" DESC`:                where.OrderBy("foo").Asc().OrderBy("bar").Desc(),
-	`11 ORDER BY "foo" ASC, "bar" DESC, "baz" ASC`:     where.OrderBy("foo").Asc().OrderBy("bar").Desc().OrderBy("baz").Asc(),
-	`12 ORDER BY "foo" DESC, "bar" ASC, "baz" DESC`:    where.OrderBy("foo").Desc().OrderBy("bar").Asc().OrderBy("baz").Desc(),
-	`13 ORDER BY "a", "b", "c", "d"`:                   where.OrderBy("a", "b").Asc().OrderBy("c", "d").Asc(),
-	`14 ORDER BY "a" DESC, "b" DESC, "c" ASC, "d" ASC`: where.OrderBy("a", "b").Desc().OrderBy("c", "d").Asc(),
-	`15 ORDER BY "a" ASC, "b" ASC, "c" DESC, "d" DESC`: where.OrderBy("a", "b").Asc().OrderBy("c", "d").Desc(),
+var queryConstraintCases = []struct {
+	qc  where.QueryConstraint
+	exp string
+}{
+	{exp: "", qc: nil},
+	{exp: ` ORDER BY "foo"`, qc: where.OrderBy("foo")},
+	{exp: ` ORDER BY "foo", "bar"`, qc: where.OrderBy("foo", "bar")},
+	{exp: ` ORDER BY "foo" NULLS FIRST`, qc: where.OrderBy("foo").Asc().NullsFirst()},
+	{exp: ` ORDER BY "foo" DESC NULLS FIRST`, qc: where.OrderBy("foo").Desc().NullsFirst()},
+	{exp: ` ORDER BY "foo", "bar", "baz"`, qc: where.OrderBy("foo", "bar", "baz").Asc()},
+	{exp: ` ORDER BY "foo" DESC, "bar" DESC, "baz" DESC`, qc: where.OrderBy("foo", "bar", "baz").Desc()},
+	{exp: ` ORDER BY "foo", "bar", "baz"`, qc: where.OrderBy("foo").OrderBy("bar").OrderBy("baz")},
+	{exp: ` ORDER BY "foo" ASC, "bar" DESC, "baz" ASC`, qc: where.OrderBy("foo").OrderBy("bar").Desc().OrderBy("baz")},
+	{exp: ` ORDER BY "foo" ASC, "bar" DESC`, qc: where.OrderBy("foo").Asc().OrderBy("bar").Desc()},
+	{exp: ` ORDER BY "foo" ASC, "bar" DESC, "baz" ASC`, qc: where.OrderBy("foo").Asc().OrderBy("bar").Desc().OrderBy("baz").Asc()},
+	{exp: ` ORDER BY "foo" DESC, "bar" ASC, "baz" DESC`, qc: where.OrderBy("foo").Desc().OrderBy("bar").Asc().OrderBy("baz").Desc()},
+	{exp: ` ORDER BY "a", "b", "c", "d"`, qc: where.OrderBy("a", "b").Asc().OrderBy("c", "d").Asc()},
+	{exp: ` ORDER BY "a" DESC, "b" DESC, "c" ASC, "d" ASC`, qc: where.OrderBy("a", "b").Desc().OrderBy("c", "d").Asc()},
+	{exp: ` ORDER BY "a" ASC, "b" ASC, "c" DESC, "d" DESC`, qc: where.OrderBy("a", "b").Asc().OrderBy("c", "d").Desc()},
 
-	`21`:                               where.Limit(0).NullsLast(),
-	`22 LIMIT 10`:                      where.Limit(10),
-	`23 OFFSET 20`:                     where.Offset(20),
-	`24 ORDER BY "foo", "bar" LIMIT 5`: where.Limit(5).OrderBy("foo", "bar"),
-	`25 ORDER BY "foo" DESC NULLS LAST LIMIT 10 OFFSET 20`: where.OrderBy("foo").Desc().Limit(10).Offset(20).NullsLast(),
+	{exp: ``, qc: where.Limit(0).NullsLast()},
+	{exp: ` LIMIT 10`, qc: where.Limit(10)},
+	{exp: ` OFFSET 20`, qc: where.Offset(20)},
+	{exp: ` ORDER BY "foo", "bar" LIMIT 5`, qc: where.Limit(5).OrderBy("foo", "bar")},
+	{exp: ` ORDER BY "foo" DESC NULLS LAST LIMIT 10 OFFSET 20`, qc: where.OrderBy("foo").Desc().Limit(10).Offset(20).NullsLast()},
 }
 
 var topConstraintCases = map[string]where.QueryConstraint{
@@ -46,8 +51,8 @@ func TestQueryConstraint1(t *testing.T) {
 	g := NewGomegaWithT(t)
 
 	for exp, c := range queryConstraintCases {
-		sql := where.Build(c, dialect.Sqlite)
-		g.Expect(sql).To(Equal(exp[2:]), exp)
+		sql := where.Build(c.qc, dialect.Sqlite, quote.AnsiQuoter)
+		g.Expect(sql).To(Equal(c.exp), exp)
 	}
 }
 
@@ -55,12 +60,13 @@ func TestQueryConstraint2(t *testing.T) {
 	g := NewGomegaWithT(t)
 
 	for exp, c := range queryConstraintCases {
-		if c != nil {
-			sql := c.Build(dialect.Sqlite)
-			g.Expect(sql).To(Equal(exp[2:]), exp)
+		if c.qc != nil {
+			sql := c.qc.Build(dialect.Sqlite, quote.AnsiQuoter)
+			g.Expect(sql).To(Equal(c.exp), exp)
 
-			sql = c.String()
-			g.Expect(sql).To(Equal(exp[2:]), exp)
+			expected := strings.ReplaceAll(c.exp, `"`, ``)
+			sql = c.qc.String()
+			g.Expect(sql).To(Equal(expected), exp)
 		}
 	}
 }
@@ -68,7 +74,7 @@ func TestQueryConstraint2(t *testing.T) {
 func BenchmarkQueryConstraint(b *testing.B) {
 	for i := 0; i < b.N; i++ {
 		for _, c := range queryConstraintCases {
-			_ = where.Build(c, dialect.Sqlite)
+			_ = where.Build(c.qc, dialect.Sqlite)
 		}
 	}
 }
@@ -104,7 +110,7 @@ func TestNilQueryConstraint_SqlServer(t *testing.T) {
 func ExampleOrderBy() {
 	qc := where.OrderBy("foo", "bar").Desc().OrderBy("baz").Asc().Limit(10).Offset(20)
 
-	s := qc.Build(dialect.Sqlite)
+	s := qc.Build(dialect.Sqlite, quote.AnsiQuoter)
 	fmt.Println(s)
 
 	// Output:  ORDER BY "foo" DESC, "bar" DESC, "baz" ASC LIMIT 10 OFFSET 20

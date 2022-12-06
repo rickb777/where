@@ -29,35 +29,35 @@ var (
 			wh:        where.Condition{Column: "name", Predicate: " not nil", Args: nil},
 			expWhere:  ` WHERE "name" not nil`,
 			expHaving: ` HAVING "name" not nil`,
-			expString: `"name" not nil`,
+			expString: `name not nil`,
 		},
 
 		{
 			wh:        where.Condition{Column: "p.name", Predicate: " not nil", Args: nil},
 			expWhere:  ` WHERE "p"."name" not nil`,
 			expHaving: ` HAVING "p"."name" not nil`,
-			expString: `"p"."name" not nil`,
+			expString: `p.name not nil`,
 		},
 
 		{
 			wh:        where.Null("name"),
 			expWhere:  ` WHERE "name" IS NULL`,
 			expHaving: ` HAVING "name" IS NULL`,
-			expString: `"name" IS NULL`,
+			expString: `name IS NULL`,
 		},
 
 		{
 			wh:        where.NotNull("name"),
 			expWhere:  ` WHERE "name" IS NOT NULL`,
 			expHaving: ` HAVING "name" IS NOT NULL`,
-			expString: `"name" IS NOT NULL`,
+			expString: `name IS NOT NULL`,
 		},
 
 		{
 			wh:        where.Condition{Column: "name", Predicate: " <>?", Args: []interface{}{"Boo"}},
 			expWhere:  ` WHERE "name" <>?`,
 			expHaving: ` HAVING "name" <>?`,
-			expString: `"name" <>'Boo'`,
+			expString: `name <>'Boo'`,
 			args:      []interface{}{"Boo"},
 		},
 
@@ -65,7 +65,7 @@ var (
 			wh:        nameEqFredInt,
 			expWhere:  ` WHERE "name"=?`,
 			expHaving: ` HAVING "name"=?`,
-			expString: `"name"='Fred'`,
+			expString: `name='Fred'`,
 			args:      []interface{}{"Fred"},
 		},
 
@@ -73,7 +73,7 @@ var (
 			wh:        where.Like("name", "F%"),
 			expWhere:  ` WHERE "name" LIKE ?`,
 			expHaving: ` HAVING "name" LIKE ?`,
-			expString: `"name" LIKE 'F%'`,
+			expString: `name LIKE 'F%'`,
 			args:      []interface{}{"F%"},
 		},
 
@@ -81,7 +81,7 @@ var (
 			wh:        where.NoOp().And(nameEqFredInt),
 			expWhere:  ` WHERE ("name"=?)`,
 			expHaving: ` HAVING ("name"=?)`,
-			expString: `("name"='Fred')`,
+			expString: `(name='Fred')`,
 			args:      []interface{}{"Fred"},
 		},
 
@@ -89,7 +89,7 @@ var (
 			wh:        nameEqFredInt.And(where.NoOp()),
 			expWhere:  ` WHERE ("name"=?)`,
 			expHaving: ` HAVING ("name"=?)`,
-			expString: `("name"='Fred')`,
+			expString: `(name='Fred')`,
 			args:      []interface{}{"Fred"},
 		},
 
@@ -97,7 +97,7 @@ var (
 			wh:        nameEqFredInt.And(where.Gt("age", 10)),
 			expWhere:  ` WHERE ("name"=?) AND ("age">?)`,
 			expHaving: ` HAVING ("name"=?) AND ("age">?)`,
-			expString: `("name"='Fred') AND ("age">10)`,
+			expString: `(name='Fred') AND (age>10)`,
 			args:      []interface{}{"Fred", 10},
 		},
 
@@ -105,7 +105,7 @@ var (
 			wh:        nameEqFredInt.Or(where.Gt("age", 10)),
 			expWhere:  ` WHERE ("name"=?) OR ("age">?)`,
 			expHaving: ` HAVING ("name"=?) OR ("age">?)`,
-			expString: `("name"='Fred') OR ("age">10)`,
+			expString: `(name='Fred') OR (age>10)`,
 			args:      []interface{}{"Fred", 10},
 		},
 
@@ -113,7 +113,7 @@ var (
 			wh:        nameEqFredInt.And(ageGt5Int).And(where.Gt("weight", 15)),
 			expWhere:  ` WHERE ("name"=?) AND ("age">?) AND ("weight">?)`,
 			expHaving: ` HAVING ("name"=?) AND ("age">?) AND ("weight">?)`,
-			expString: `("name"='Fred') AND ("age">5) AND ("weight">15)`,
+			expString: `(name='Fred') AND (age>5) AND (weight>15)`,
 			args:      []interface{}{"Fred", 5, 15},
 		},
 
@@ -121,7 +121,7 @@ var (
 			wh:        nameEqFredInt.Or(ageGt5Int).Or(where.Gt("weight", 15)),
 			expWhere:  ` WHERE ("name"=?) OR ("age">?) OR ("weight">?)`,
 			expHaving: ` HAVING ("name"=?) OR ("age">?) OR ("weight">?)`,
-			expString: `("name"='Fred') OR ("age">5) OR ("weight">15)`,
+			expString: `(name='Fred') OR (age>5) OR (weight>15)`,
 			args:      []interface{}{"Fred", 5, 15},
 		},
 
@@ -129,7 +129,7 @@ var (
 			wh:        where.Between("age", 12, 18).Or(where.Gt("weight", 45)),
 			expWhere:  ` WHERE ("age" BETWEEN ? AND ?) OR ("weight">?)`,
 			expHaving: ` HAVING ("age" BETWEEN ? AND ?) OR ("weight">?)`,
-			expString: `("age" BETWEEN 12 AND 18) OR ("weight">45)`,
+			expString: `(age BETWEEN 12 AND 18) OR (weight>45)`,
 			args:      []interface{}{12, 18, 45},
 		},
 
@@ -137,7 +137,7 @@ var (
 			wh:        where.GtEq("age", 10),
 			expWhere:  ` WHERE "age">=?`,
 			expHaving: ` HAVING "age">=?`,
-			expString: `"age">=10`,
+			expString: `age>=10`,
 			args:      []interface{}{10},
 		},
 
@@ -145,7 +145,7 @@ var (
 			wh:        where.LtEq("age", 10),
 			expWhere:  ` WHERE "age"<=?`,
 			expHaving: ` HAVING "age"<=?`,
-			expString: `"age"<=10`,
+			expString: `age<=10`,
 			args:      []interface{}{10},
 		},
 
@@ -153,7 +153,7 @@ var (
 			wh:        where.NotEq("age", 10),
 			expWhere:  ` WHERE "age"<>?`,
 			expHaving: ` HAVING "age"<>?`,
-			expString: `"age"<>10`,
+			expString: `age<>10`,
 			args:      []interface{}{10},
 		},
 
@@ -161,7 +161,7 @@ var (
 			wh:        where.In("age", 10, 12, 14),
 			expWhere:  ` WHERE "age" IN (?,?,?)`,
 			expHaving: ` HAVING "age" IN (?,?,?)`,
-			expString: `"age" IN (10,12,14)`,
+			expString: `age IN (10,12,14)`,
 			args:      []interface{}{10, 12, 14},
 		},
 
@@ -173,7 +173,7 @@ var (
 			wh:        where.In("age", 1, nil, 2, nil),
 			expWhere:  ` WHERE ("age" IN (?,?)) OR ("age" IS NULL)`,
 			expHaving: ` HAVING ("age" IN (?,?)) OR ("age" IS NULL)`,
-			expString: `("age" IN (1,2)) OR ("age" IS NULL)`,
+			expString: `(age IN (1,2)) OR (age IS NULL)`,
 			args:      []interface{}{1, 2},
 		},
 
@@ -181,14 +181,14 @@ var (
 			wh:        where.In("age", nil),
 			expWhere:  ` WHERE "age" IS NULL`,
 			expHaving: ` HAVING "age" IS NULL`,
-			expString: `"age" IS NULL`,
+			expString: `age IS NULL`,
 		},
 
 		{
 			wh:        where.InSlice("ages", []int{10, 12, 14}),
 			expWhere:  ` WHERE "ages" IN (?,?,?)`,
 			expHaving: ` HAVING "ages" IN (?,?,?)`,
-			expString: `"ages" IN (10,12,14)`,
+			expString: `ages IN (10,12,14)`,
 			args:      []interface{}{10, 12, 14},
 		},
 
@@ -196,7 +196,7 @@ var (
 			wh:        where.InSlice("ages", []interface{}{1, nil, 2, nil}),
 			expWhere:  ` WHERE ("ages" IN (?,?)) OR ("ages" IS NULL)`,
 			expHaving: ` HAVING ("ages" IN (?,?)) OR ("ages" IS NULL)`,
-			expString: `("ages" IN (1,2)) OR ("ages" IS NULL)`,
+			expString: `(ages IN (1,2)) OR (ages IS NULL)`,
 			args:      []interface{}{1, 2},
 		},
 
@@ -208,7 +208,7 @@ var (
 			wh:        nameEqFredInt.Or(nameEqJohnInt),
 			expWhere:  ` WHERE ("name"=?) OR ("name"=?)`,
 			expHaving: ` HAVING ("name"=?) OR ("name"=?)`,
-			expString: `("name"='Fred') OR ("name"='John')`,
+			expString: `(name='Fred') OR (name='John')`,
 			args:      []interface{}{"Fred", "John"},
 		},
 
@@ -216,7 +216,7 @@ var (
 			wh:        where.Not(nameEqFredInt),
 			expWhere:  ` WHERE NOT ("name"=?)`,
 			expHaving: ` HAVING NOT ("name"=?)`,
-			expString: `NOT ("name"='Fred')`,
+			expString: `NOT (name='Fred')`,
 			args:      []interface{}{"Fred"},
 		},
 
@@ -224,7 +224,7 @@ var (
 			wh:        where.Not(nameEqFredInt.And(ageLt10Int)),
 			expWhere:  ` WHERE NOT (("name"=?) AND ("age"<?))`,
 			expHaving: ` HAVING NOT (("name"=?) AND ("age"<?))`,
-			expString: `NOT (("name"='Fred') AND ("age"<10))`,
+			expString: `NOT ((name='Fred') AND (age<10))`,
 			args:      []interface{}{"Fred", 10},
 		},
 
@@ -232,7 +232,7 @@ var (
 			wh:        where.Not(nameEqFredInt.Or(ageLt10Int)),
 			expWhere:  ` WHERE NOT (("name"=?) OR ("age"<?))`,
 			expHaving: ` HAVING NOT (("name"=?) OR ("age"<?))`,
-			expString: `NOT (("name"='Fred') OR ("age"<10))`,
+			expString: `NOT ((name='Fred') OR (age<10))`,
 			args:      []interface{}{"Fred", 10},
 		},
 
@@ -240,7 +240,7 @@ var (
 			wh:        where.Not(nameEqFredInt).And(ageLt10Int),
 			expWhere:  ` WHERE (NOT ("name"=?)) AND ("age"<?)`,
 			expHaving: ` HAVING (NOT ("name"=?)) AND ("age"<?)`,
-			expString: `(NOT ("name"='Fred')) AND ("age"<10)`,
+			expString: `(NOT (name='Fred')) AND (age<10)`,
 			args:      []interface{}{"Fred", 10},
 		},
 
@@ -248,7 +248,7 @@ var (
 			wh:        where.Not(nameEqFredInt).Or(ageLt10Int),
 			expWhere:  ` WHERE (NOT ("name"=?)) OR ("age"<?)`,
 			expHaving: ` HAVING (NOT ("name"=?)) OR ("age"<?)`,
-			expString: `(NOT ("name"='Fred')) OR ("age"<10)`,
+			expString: `(NOT (name='Fred')) OR (age<10)`,
 			args:      []interface{}{"Fred", 10},
 		},
 
@@ -256,7 +256,7 @@ var (
 			wh:        where.And(nameEqFredInt, nil, ageLt10Int),
 			expWhere:  ` WHERE ("name"=?) AND ("age"<?)`,
 			expHaving: ` HAVING ("name"=?) AND ("age"<?)`,
-			expString: `("name"='Fred') AND ("age"<10)`,
+			expString: `(name='Fred') AND (age<10)`,
 			args:      []interface{}{"Fred", 10},
 		},
 
@@ -264,7 +264,7 @@ var (
 			wh:        where.Or(nameEqFredInt, nil, ageLt10Int),
 			expWhere:  ` WHERE ("name"=?) OR ("age"<?)`,
 			expHaving: ` HAVING ("name"=?) OR ("age"<?)`,
-			expString: `("name"='Fred') OR ("age"<10)`,
+			expString: `(name='Fred') OR (age<10)`,
 			args:      []interface{}{"Fred", 10},
 		},
 
@@ -272,7 +272,7 @@ var (
 			wh:        where.And(nameEqFredInt).And(where.And(ageLt10Int)),
 			expWhere:  ` WHERE ("name"=?) AND ("age"<?)`,
 			expHaving: ` HAVING ("name"=?) AND ("age"<?)`,
-			expString: `("name"='Fred') AND ("age"<10)`,
+			expString: `(name='Fred') AND (age<10)`,
 			args:      []interface{}{"Fred", 10},
 		},
 
@@ -280,7 +280,7 @@ var (
 			wh:        where.Eq("a", 1).And(where.Eq("b", 2)).And(where.And(where.Eq("c", 3), where.Eq("d", 4))),
 			expWhere:  ` WHERE ("a"=?) AND ("b"=?) AND ("c"=?) AND ("d"=?)`,
 			expHaving: ` HAVING ("a"=?) AND ("b"=?) AND ("c"=?) AND ("d"=?)`,
-			expString: `("a"=1) AND ("b"=2) AND ("c"=3) AND ("d"=4)`,
+			expString: `(a=1) AND (b=2) AND (c=3) AND (d=4)`,
 			args:      []interface{}{1, 2, 3, 4},
 		},
 
@@ -288,7 +288,7 @@ var (
 			wh:        where.Eq("a", 1).Or(where.Eq("b", 2)).Or(where.Or(where.Eq("c", 3), where.Eq("d", 4))),
 			expWhere:  ` WHERE ("a"=?) OR ("b"=?) OR ("c"=?) OR ("d"=?)`,
 			expHaving: ` HAVING ("a"=?) OR ("b"=?) OR ("c"=?) OR ("d"=?)`,
-			expString: `("a"=1) OR ("b"=2) OR ("c"=3) OR ("d"=4)`,
+			expString: `(a=1) OR (b=2) OR (c=3) OR (d=4)`,
 			args:      []interface{}{1, 2, 3, 4},
 		},
 
@@ -296,7 +296,7 @@ var (
 			wh:        where.And(nameEqFredInt.Or(nameEqJohnInt), ageLt10Int),
 			expWhere:  ` WHERE (("name"=?) OR ("name"=?)) AND ("age"<?)`,
 			expHaving: ` HAVING (("name"=?) OR ("name"=?)) AND ("age"<?)`,
-			expString: `(("name"='Fred') OR ("name"='John')) AND ("age"<10)`,
+			expString: `((name='Fred') OR (name='John')) AND (age<10)`,
 			args:      []interface{}{"Fred", "John", 10},
 		},
 
@@ -304,7 +304,7 @@ var (
 			wh:        where.Or(nameEqFredInt, ageLt10Int.And(ageGt5Int)),
 			expWhere:  ` WHERE ("name"=?) OR (("age"<?) AND ("age">?))`,
 			expHaving: ` HAVING ("name"=?) OR (("age"<?) AND ("age">?))`,
-			expString: `("name"='Fred') OR (("age"<10) AND ("age">5))`,
+			expString: `(name='Fred') OR ((age<10) AND (age>5))`,
 			args:      []interface{}{"Fred", 10, 5},
 		},
 
@@ -312,7 +312,7 @@ var (
 			wh:        where.Or(nameEqFredInt, nameEqJohnInt).And(ageGt5Int),
 			expWhere:  ` WHERE (("name"=?) OR ("name"=?)) AND ("age">?)`,
 			expHaving: ` HAVING (("name"=?) OR ("name"=?)) AND ("age">?)`,
-			expString: `(("name"='Fred') OR ("name"='John')) AND ("age">5)`,
+			expString: `((name='Fred') OR (name='John')) AND (age>5)`,
 			args:      []interface{}{"Fred", "John", 5},
 		},
 
@@ -320,7 +320,7 @@ var (
 			wh:        where.Or(nameEqFredInt, nameEqJohnInt, where.And(ageGt5Int)),
 			expWhere:  ` WHERE ("name"=?) OR ("name"=?) OR ("age">?)`,
 			expHaving: ` HAVING ("name"=?) OR ("name"=?) OR ("age">?)`,
-			expString: `("name"='Fred') OR ("name"='John') OR ("age">5)`,
+			expString: `(name='Fred') OR (name='John') OR (age>5)`,
 			args:      []interface{}{"Fred", "John", 5},
 		},
 
@@ -348,7 +348,7 @@ func TestBuildWhereClause_happyCases(t *testing.T) {
 	for i, c := range buildWhereClauseHappyCases {
 		t.Logf("%d: %s", i, c.expWhere)
 
-		sql, args := where.Where(c.wh)
+		sql, args := where.Where(c.wh, quote.AnsiQuoter)
 
 		g.Expect(sql).To(Equal(c.expWhere))
 		g.Expect(args).To(Equal(c.args))
@@ -365,7 +365,7 @@ func TestBuildHavingClause_happyCases(t *testing.T) {
 	for i, c := range buildWhereClauseHappyCases {
 		t.Logf("%d: %s", i, c.expHaving)
 
-		sql, args := where.Having(c.wh)
+		sql, args := where.Having(c.wh, quote.AnsiQuoter)
 
 		g.Expect(sql).To(Equal(c.expHaving))
 		g.Expect(args).To(Equal(c.args))
@@ -412,5 +412,49 @@ func ExampleWhere() {
 	fmt.Println(args)
 
 	// Output: WHERE ((name=$1) OR (name=$2)) AND (age>$3) AND (likes IN ($4,$5))
+	// [John Peter 10 cats dogs]
+}
+
+func ExampleWhere_mysqlUsingParameters() {
+	// some simple expressions
+	nameEqJohn := where.Eq("name", "John")
+	nameEqPeter := where.Eq("name", "Peter")
+	ageGt10 := where.Gt("age", 10)
+	likes := where.In("likes", "cats", "dogs")
+
+	// Build a compound expression - this is a static expression
+	// but it could be built up in stages depending on any conditions.
+	wh := where.And(where.Or(nameEqJohn, nameEqPeter), ageGt10, likes)
+
+	// Build the 'where' clause, quoting all the identifiers for MySql.
+	clause, args := where.Where(wh, quote.MySqlQuoter, dialect.Mysql)
+
+	fmt.Println(clause)
+	fmt.Println(args)
+
+	// Output: WHERE ((`name`=?) OR (`name`=?)) AND (`age`>?) AND (`likes` IN (?,?))
+	// [John Peter 10 cats dogs]
+}
+
+func ExampleWhere_postgresUsingParameters() {
+	// some simple expressions
+	nameEqJohn := where.Eq("name", "John")
+	nameEqPeter := where.Eq("name", "Peter")
+	ageGt10 := where.Gt("age", 10)
+	likes := where.In("likes", "cats", "dogs")
+
+	// Build a compound expression - this is a static expression
+	// but it could be built up in stages depending on any conditions.
+	wh := where.And(where.Or(nameEqJohn, nameEqPeter), ageGt10, likes)
+
+	// Build the 'where' clause, quoting all the identifiers for Postgres
+	// and replacing all the '?' parameters with "$1" numbered parameters,
+	// counting from 1.
+	clause, args := where.Where(wh, quote.AnsiQuoter, dialect.Postgres)
+
+	fmt.Println(clause)
+	fmt.Println(args)
+
+	// Output: WHERE (("name"=$1) OR ("name"=$2)) AND ("age">$3) AND ("likes" IN ($4,$5))
 	// [John Peter 10 cats dogs]
 }

@@ -23,6 +23,16 @@ const (
 	SqlServer
 )
 
+func (d Dialect) Placeholder() PlaceholderStyle {
+	switch d {
+	case Postgres:
+		return Dollar
+	case SqlServer:
+		return AtP
+	}
+	return Query
+}
+
 func (d Dialect) String() string {
 	switch d {
 	case Sqlite:
