@@ -6,13 +6,12 @@ import (
 	"testing"
 
 	. "github.com/onsi/gomega"
-	"github.com/rickb777/where"
-	"github.com/rickb777/where/dialect"
-	"github.com/rickb777/where/quote"
+	"github.com/rickb777/where/v2"
+	"github.com/rickb777/where/v2/dialect"
 )
 
-var queryConstraintCases = []struct {
-	qc  where.QueryConstraint
+var queryConstraintAnsiQuoteCases = []struct {
+	qc  *where.QueryConstraint
 	exp string
 }{
 	{exp: "", qc: nil},
@@ -38,7 +37,7 @@ var queryConstraintCases = []struct {
 	{exp: ` ORDER BY "foo" DESC NULLS LAST LIMIT 10 OFFSET 20`, qc: where.OrderBy("foo").Desc().Limit(10).Offset(20).NullsLast()},
 }
 
-var topConstraintCases = map[string]where.QueryConstraint{
+var topConstraintCases = map[string]*where.QueryConstraint{
 	`1`:          nil,
 	`2`:          where.Limit(0),
 	`3 TOP (10)`: where.Limit(10),
@@ -50,18 +49,22 @@ var topConstraintCases = map[string]where.QueryConstraint{
 func TestQueryConstraint1(t *testing.T) {
 	g := NewGomegaWithT(t)
 
-	for exp, c := range queryConstraintCases {
-		sql := where.Build(c.qc, dialect.Sqlite, quote.AnsiQuoter)
-		g.Expect(sql).To(Equal(c.exp), exp)
+	for i, c := range queryConstraintAnsiQuoteCases {
+		sql1 := c.qc.Format(dialect.Sqlite, dialect.ANSIQuotes)
+		g.Expect(sql1).To(Equal(c.exp), "%d: %v", i, c)
+
+		exp2 := strings.ReplaceAll(c.exp, `"`, ``)
+		sql2 := c.qc.Format(dialect.Sqlite, dialect.NoQuotes)
+		g.Expect(sql2).To(Equal(exp2), "%d: %v", i, c)
 	}
 }
 
 func TestQueryConstraint2(t *testing.T) {
 	g := NewGomegaWithT(t)
 
-	for exp, c := range queryConstraintCases {
+	for exp, c := range queryConstraintAnsiQuoteCases {
 		if c.qc != nil {
-			sql := c.qc.Build(dialect.Sqlite, quote.AnsiQuoter)
+			sql := c.qc.Format(dialect.Sqlite, dialect.ANSIQuotes)
 			g.Expect(sql).To(Equal(c.exp), exp)
 
 			expected := strings.ReplaceAll(c.exp, `"`, ``)
@@ -73,8 +76,8 @@ func TestQueryConstraint2(t *testing.T) {
 
 func BenchmarkQueryConstraint(b *testing.B) {
 	for i := 0; i < b.N; i++ {
-		for _, c := range queryConstraintCases {
-			_ = where.Build(c.qc, dialect.Sqlite)
+		for _, c := range queryConstraintAnsiQuoteCases {
+			_ = c.qc.Format(dialect.Sqlite)
 		}
 	}
 }
@@ -83,13 +86,13 @@ func TestQueryConstraint_SqlServer(t *testing.T) {
 	g := NewGomegaWithT(t)
 
 	for exp, qc := range topConstraintCases {
-		top := where.BuildTop(qc, dialect.SqlServer)
+		top := qc.FormatTOP(dialect.SqlServer)
 		g.Expect(top).To(Equal(exp[1:]), exp)
 	}
 
 	for exp, qc := range topConstraintCases {
 		if qc != nil {
-			top := qc.BuildTop(dialect.SqlServer)
+			top := qc.FormatTOP(dialect.SqlServer)
 			g.Expect(top).To(Equal(exp[1:]), exp)
 		}
 	}
@@ -100,8 +103,8 @@ func TestNilQueryConstraint_SqlServer(t *testing.T) {
 
 	var qc where.QueryConstraint
 
-	top := where.BuildTop(qc, dialect.SqlServer)
-	sql := where.Build(qc, dialect.SqlServer)
+	top := qc.FormatTOP(dialect.SqlServer)
+	sql := qc.Format(dialect.SqlServer)
 
 	g.Expect(top).To(Equal(""))
 	g.Expect(sql).To(Equal(""))
@@ -110,7 +113,7 @@ func TestNilQueryConstraint_SqlServer(t *testing.T) {
 func ExampleOrderBy() {
 	qc := where.OrderBy("foo", "bar").Desc().OrderBy("baz").Asc().Limit(10).Offset(20)
 
-	s := qc.Build(dialect.Sqlite, quote.AnsiQuoter)
+	s := qc.Format(dialect.Sqlite, dialect.ANSIQuotes)
 	fmt.Println(s)
 
 	// Output:  ORDER BY "foo" DESC, "bar" DESC, "baz" ASC LIMIT 10 OFFSET 20
@@ -119,13 +122,13 @@ func ExampleOrderBy() {
 func ExampleLimit() {
 	qc := where.Limit(10).Offset(20)
 
-	s1 := qc.Build(dialect.Sqlite)
+	s1 := qc.Format(dialect.Sqlite)
 	fmt.Println("SQlite:    ", s1)
 
-	s2 := qc.BuildTop(dialect.SqlServer)
+	s2 := qc.FormatTOP(dialect.SqlServer)
 	fmt.Println("SQL-Server:", s2)
 
-	s3 := qc.Build(dialect.SqlServer)
+	s3 := qc.Format(dialect.SqlServer)
 	fmt.Println("SQL-Server:", s3)
 
 	// Output: SQlite:      LIMIT 10 OFFSET 20

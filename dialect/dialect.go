@@ -1,11 +1,10 @@
-// Package dialect handles quote marks and SQL placeholders in various dialect-specific ways.
-// Queries should be written using '?' query placeholders throughout, and then this package will translate to
-// the form needed by the chosen dialect.
+// Package dialect handles various dialect-specific ways of generating SQL.
 package dialect
 
 import (
-	"strconv"
 	"strings"
+
+	"github.com/rickb777/where/v2/quote"
 )
 
 // Dialect represents a dialect of SQL. All the defined dialects are non-zero.
@@ -23,7 +22,26 @@ const (
 	SqlServer
 )
 
-func (d Dialect) Placeholder() PlaceholderStyle {
+// These are defaults used by each dialect; they can be altered before first use.
+var (
+	// SqliteQuoter uses ANSI double-quotes for Sqlite.
+	// This can be modified, e.g. to None, before first use.
+	SqliteQuoter = quote.ANSI
+
+	// PostgresQuoter uses ANSI double-quotes for Postgres.
+	// This can be modified, e.g. to None, before first use.
+	PostgresQuoter = quote.ANSI
+
+	// MySqlQuoter uses backticks for MySQL.
+	// This can be modified, e.g. to None, before first use.
+	MySqlQuoter = quote.Backticks
+
+	// MSSqlQuoter uses square brackets for MS-SQL.
+	// This can be modified, e.g. to None, before first use.
+	MSSqlQuoter = quote.SquareBrackets
+)
+
+func (d Dialect) Placeholder() FormatOption {
 	switch d {
 	case Postgres:
 		return Dollar
@@ -31,6 +49,20 @@ func (d Dialect) Placeholder() PlaceholderStyle {
 		return AtP
 	}
 	return Query
+}
+
+func (d Dialect) Quoter() quote.Quoter {
+	switch d {
+	case Mysql:
+		return MySqlQuoter
+	case Postgres:
+		return PostgresQuoter
+	case Sqlite:
+		return SqliteQuoter
+	case SqlServer:
+		return MSSqlQuoter
+	}
+	return quote.DefaultQuoter
 }
 
 func (d Dialect) String() string {
@@ -74,52 +106,36 @@ var DefaultDialect = Sqlite // chosen as being probably the simplest
 
 //-------------------------------------------------------------------------------------------------
 
-// PlaceholderStyle enumerates the different ways of including placeholders in SQL.
-type PlaceholderStyle string
+// FormatOption provides controls for where-expression formatting.
+type FormatOption int
 
+// These options affect how placeholders are renderered.
 const (
-	// Query is the '?' placeholder style.
-	Query PlaceholderStyle = ""
-	// Dollar numbered placeholders '$1', '$2' etc are used (e.g.) in PostgreSQL.
-	Dollar PlaceholderStyle = "$"
-	// At numbered placeholders '@p1', '@p2' etc are used in SQL-Server.
-	AtP PlaceholderStyle = "@p"
+	// Query indicates placeholders using queries '?'. For Sqlite & MySql.
+	Query FormatOption = iota
+	// Dollar indicates placeholders using numbered $1, $2, ... format. For PostgreSQL.
+	Dollar
+	// AtP indicates placeholders using numbered @p1, @p2, ... format. For SQL-Server.
+	AtP
+	// Inline indicates that each placeholder is removed and its value is inlined.
+	Inline
 )
 
-// ReplacePlaceholders replaces all "?" placeholders with numbered
-// placeholders, using the given prefix.
-// For PostgreSQL these will be "$1" and upward placeholders so the prefix should be "$" (Dollar).
-// For SQL-Server there will be "@p1" and upward placeholders so the prefix should be "@p" (AtP).
-// The count will start with 'from', if provided, otherwise at one.
-func ReplacePlaceholders(sql string, prefix PlaceholderStyle, from ...int) string {
-	if prefix == "" {
-		return sql
-	}
+// These options affect how column names are quoted.
+const (
+	// NoQuotes indicates identifiers will not be enclosed in quote marks.
+	NoQuotes FormatOption = iota + 10
+	// ANSIQuotes indicates identifiers will be enclosed in double quote marks.
+	ANSIQuotes
+	// Backticks indicates identifiers will be enclosed in back-tick marks.
+	Backticks
+	// SquareBrackets indicates identifiers will be enclosed in square brackets.
+	SquareBrackets
+)
 
-	n := 0
-	for _, r := range sql {
-		if r == '?' {
-			n++
-		}
-	}
-
-	count := 1
-	if len(from) > 0 {
-		count = from[0]
-	}
-
-	buf := &strings.Builder{}
-	buf.Grow(len(sql) + n*(len(prefix)+2))
-
-	for _, r := range sql {
-		if r == '?' {
-			buf.WriteString(string(prefix))
-			buf.WriteString(strconv.Itoa(count))
-			count++
-		} else {
-			buf.WriteRune(r)
-		}
-	}
-
-	return buf.String()
-}
+const (
+	// PostgresQuotes is an alias for ANSIQuotes, so identifiers will be enclosed in double quote marks.
+	PostgresQuotes = ANSIQuotes
+	// MySqlQuotes is an alias for Backticks, so identifiers will be enclosed in back-tick marks.
+	MySqlQuotes = Backticks
+)

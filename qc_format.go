@@ -4,8 +4,7 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/rickb777/where/dialect"
-	"github.com/rickb777/where/quote"
+	"github.com/rickb777/where/v2/dialect"
 )
 
 const (
@@ -29,20 +28,24 @@ type orderingTerm struct {
 	dir    int
 }
 
-type queryConstraint struct {
+type QueryConstraint struct {
 	orderBy       []orderingTerm
 	nulls         int
 	limit, offset int
 }
 
-var _ QueryConstraint = &queryConstraint{}
+//var _ QueryConstraint = &queryConstraint{}
 
-// Build constructs the SQL string using the optional quoter or the default quoter.
-func (qc *queryConstraint) Build(d dialect.Dialect, qq ...quote.Quoter) string {
+// Format formats the SQL expressions.
+func (qc *QueryConstraint) Format(d dialect.Dialect, option ...dialect.FormatOption) string {
+	if qc == nil {
+		return ""
+	}
+
 	b := new(strings.Builder)
 	b.Grow(qc.estimateStringLength())
 
-	q := pickQuoter(qq)
+	q := quoterFromOptions(option)
 
 	if len(qc.orderBy) > 0 {
 		b.WriteString(" ORDER BY")
@@ -86,16 +89,20 @@ func (qc *queryConstraint) Build(d dialect.Dialect, qq ...quote.Quoter) string {
 	return b.String()
 }
 
-// BuildTop constructs the SQL string using the given dialect. The only known dialect
-// for which this is used is SQL-Server; otherwise it returns an empty string. Insert
-// the returned value into your query between "SELECT [DISTINCT] " and the list of columns.
-func (qc *queryConstraint) BuildTop(d dialect.Dialect) string {
+// FormatTOP formats the SQL 'TOP' expression using the given dialect. Only SQL-Server uses this;
+// for other dialects, it returns an empty string. Insert the returned string into your query
+// after "SELECT [DISTINCT] " and before the list of column names.
+func (qc *QueryConstraint) FormatTOP(d dialect.Dialect) string {
+	if qc == nil {
+		return ""
+	}
+
 	if d != dialect.SqlServer || qc.limit == 0 {
 		return ""
 	}
 
 	b := new(strings.Builder)
-	b.Grow(10)
+	b.Grow(12)
 	b.WriteString(" TOP (")
 	b.WriteString(strconv.Itoa(qc.limit))
 	b.WriteString(")")
@@ -103,7 +110,7 @@ func (qc *queryConstraint) BuildTop(d dialect.Dialect) string {
 	return b.String()
 }
 
-func (qc *queryConstraint) estimateStringLength() (n int) {
+func (qc *QueryConstraint) estimateStringLength() (n int) {
 	if len(qc.orderBy) > 0 {
 		n += 14 // " ORDER BY" and " DESC"
 		for _, col := range qc.orderBy {
@@ -122,6 +129,6 @@ func (qc *queryConstraint) estimateStringLength() (n int) {
 	return n
 }
 
-func (qc *queryConstraint) String() string {
-	return qc.Build(dialect.DefaultDialect, quote.DefaultQuoter)
+func (qc *QueryConstraint) String() string {
+	return qc.Format(dialect.DefaultDialect)
 }

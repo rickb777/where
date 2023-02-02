@@ -26,10 +26,10 @@ const (
 // source in the column or predicate.
 //
 // This function is the basis for all the other predicates except In/InSlice.
-func Literal(column, predicate string, value ...interface{}) Expression {
-	if len(value) == 0 {
-		return Condition{Column: column, Predicate: predicate}
-	}
+func Literal(column, predicate string, value ...any) Expression {
+	//if len(value) == 0 {
+	//	return Condition{Column: column, Predicate: predicate}
+	//}
 	return Condition{Column: column, Predicate: predicate, Args: value}
 }
 
@@ -47,7 +47,7 @@ func NotNull(column string) Expression {
 //
 // A '?' placeholder is used so it may be necessary to replace placeholders in the
 // resulting query, e.g using 'dialect.ReplacePlaceholdersWithNumbers(query)'.
-func Eq(column string, value interface{}) Expression {
+func Eq(column string, value any) Expression {
 	return Literal(column, PredicateEqualTo, value)
 }
 
@@ -55,7 +55,7 @@ func Eq(column string, value interface{}) Expression {
 //
 // A '?' placeholder is used so it may be necessary to replace placeholders in the
 // resulting query, e.g using 'dialect.ReplacePlaceholdersWithNumbers(query)'.
-func NotEq(column string, value interface{}) Expression {
+func NotEq(column string, value any) Expression {
 	return Literal(column, PredicateNotEqualTo, value)
 }
 
@@ -63,7 +63,7 @@ func NotEq(column string, value interface{}) Expression {
 //
 // A '?' placeholder is used so it may be necessary to replace placeholders in the
 // resulting query, e.g using 'dialect.ReplacePlaceholdersWithNumbers(query)'.
-func Gt(column string, value interface{}) Expression {
+func Gt(column string, value any) Expression {
 	return Literal(column, PredicateGreaterThan, value)
 }
 
@@ -71,7 +71,7 @@ func Gt(column string, value interface{}) Expression {
 //
 // A '?' placeholder is used so it may be necessary to replace placeholders in the
 // resulting query, e.g using 'dialect.ReplacePlaceholdersWithNumbers(query)'.
-func GtEq(column string, value interface{}) Expression {
+func GtEq(column string, value any) Expression {
 	return Literal(column, PredicateGreaterThanOrEqualTo, value)
 }
 
@@ -79,7 +79,7 @@ func GtEq(column string, value interface{}) Expression {
 //
 // A '?' placeholder is used so it may be necessary to replace placeholders in the
 // resulting query, e.g using 'dialect.ReplacePlaceholdersWithNumbers(query)'.
-func Lt(column string, value interface{}) Expression {
+func Lt(column string, value any) Expression {
 	return Literal(column, PredicateLessThan, value)
 }
 
@@ -87,7 +87,7 @@ func Lt(column string, value interface{}) Expression {
 //
 // A '?' placeholder is used so it may be necessary to replace placeholders in the
 // resulting query, e.g using 'dialect.ReplacePlaceholdersWithNumbers(query)'.
-func LtEq(column string, value interface{}) Expression {
+func LtEq(column string, value any) Expression {
 	return Literal(column, PredicateLessThanOrEqualTo, value)
 }
 
@@ -95,7 +95,7 @@ func LtEq(column string, value interface{}) Expression {
 //
 // Two '?' placeholders are used so it may be necessary to replace placeholders in the
 // resulting query, e.g using 'dialect.ReplacePlaceholdersWithNumbers(query)'.
-func Between(column string, a, b interface{}) Expression {
+func Between(column string, a, b any) Expression {
 	return Literal(column, PredicateBetween, a, b)
 }
 
@@ -115,12 +115,12 @@ func Like(column string, pattern string) Expression {
 // resulting query according to SQL dialect, e.g using 'dialect.ReplacePlaceholdersWithNumbers(query)'.
 //
 // Note that this does not reflection, unlike InSlice.
-func In(column string, values ...interface{}) Expression {
+func In(column string, values ...any) Expression {
 	if len(values) == 0 {
 		return NoOp()
 	}
 
-	args := make([]interface{}, 0, len(values))
+	args := make([]any, 0, len(values))
 	hasNull := false
 	buf := &strings.Builder{}
 	buf.WriteString(" IN (")
@@ -161,7 +161,7 @@ func In(column string, values ...interface{}) Expression {
 // resulting query according to SQL dialect, e.g using 'dialect.ReplacePlaceholdersWithNumbers(query)'.
 //
 // Note that this uses reflection, unlike In.
-func InSlice(column string, arg interface{}) Expression {
+func InSlice(column string, arg any) Expression {
 	switch arg.(type) {
 	case nil:
 		return NoOp()
@@ -177,7 +177,7 @@ func InSlice(column string, arg interface{}) Expression {
 	}
 
 	hasNull := false
-	var v []interface{}
+	v := make([]any, 0, value.Len())
 	buf := &strings.Builder{}
 	buf.WriteString(" IN (")
 
