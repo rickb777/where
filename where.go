@@ -30,14 +30,14 @@ const (
 )
 
 // Where constructs the SQL clause beginning "WHERE ...".
-// Optional parameters may be supplied. Oterwise, by default, quote.DefaultQuoter is used
+// Optional parameters may be supplied. Otherwise, by default, quote.DefaultQuoter is used
 // and the result will contain '?' style placeholders.
 func Where(wh Expression, option ...dialect.FormatOption) (string, []interface{}) {
 	return format(whereConjunction, wh, option...)
 }
 
 // Having constructs the SQL clause beginning "HAVING ...".
-// Optional parameters may be supplied. Oterwise, by default, quote.DefaultQuoter is used
+// Optional parameters may be supplied. Otherwise, by default, quote.DefaultQuoter is used
 // and the result will contain '?' style placeholders.
 func Having(wh Expression, option ...dialect.FormatOption) (string, []interface{}) {
 	return format(havingConjunction, wh, option...)

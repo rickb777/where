@@ -1,11 +1,20 @@
-// Package quote augments SQL strings by quoting identifiers according to three common
-// variants: back-ticks used by MySQL, double-quotes used in ANSI SQL (PostgreSQL etc),
-// or no quotes at all. For prefixed identifiers containing a dot ('.'), the quote
-// marks are applied separately to the prefix and the identifier itself.
+// Package quote augments SQL strings by quoting identifiers according to four common
+// variants:
+//   - back-ticks used by MySQL,
+//   - double-quotes used in ANSI SQL (PostgreSQL etc),
+//   - square brackets used by SQLServer, or
+//   - no quotes at all.
+//
+// For prefixed identifiers containing a dot ('.'), the quote marks are applied separately
+// to the prefix(es) and the identifier itself.
+//
+// Quoting is only applied where a column name is clear (as in the 'where' package). There
+// isn't a general syntax analyser that somehow fixes up arbitrary SQL.
 package quote
 
 import (
 	"io"
+	"regexp"
 	"strings"
 )
 
@@ -68,6 +77,8 @@ type quoter struct {
 	before, between, after string
 }
 
+var validIdentifier = regexp.MustCompile(`^\pL[\pL\pN_]*$`)
+
 func (q quoter) Quote(identifier string) string {
 	if len(identifier) == 0 {
 		return ""
@@ -81,17 +92,26 @@ func (q quoter) Quote(identifier string) string {
 
 func (q quoter) QuoteW(w io.StringWriter, identifier string) {
 	if len(identifier) > 0 {
-		elements := strings.Split(identifier, ".")
-		quoteW(w, q.before, q.between, q.after, elements...)
+		names := strings.Split(identifier, ".")
+
+		for _, name := range names {
+			// if any name is invalid, we leave the entire string unaltered
+			if !validIdentifier.MatchString(name) {
+				_, _ = w.WriteString(identifier)
+				return
+			}
+		}
+
+		quoteW(w, q.before, q.between, q.after, names...)
 	}
 }
 
-func quoteW(w io.StringWriter, before, sep, after string, elements ...string) {
+func quoteW(w io.StringWriter, before, sep, after string, names ...string) {
 	_, _ = w.WriteString(before)
-	_, _ = w.WriteString(elements[0])
+	_, _ = w.WriteString(names[0])
 
-	// write the rest of the elements, preceding each with the separator
-	for _, e := range elements[1:] {
+	// write the rest of the names, preceding each with the separator
+	for _, e := range names[1:] {
 		_, _ = w.WriteString(sep)
 		_, _ = w.WriteString(e)
 	}

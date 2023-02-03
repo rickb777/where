@@ -83,9 +83,21 @@ func TestAnsiQuote(t *testing.T) {
 			expected:   "[a].[ccc].[ddd]",
 			dialect:    "mssql",
 		},
+		{
+			identifier: "a,ccc,ddd",
+			expected:   "a,ccc,ddd",
+			dialect:    "mssql",
+		},
+		{
+			identifier: "a ccc ddd",
+			expected:   "a ccc ddd",
+			dialect:    "mssql",
+		},
 	}
 
-	for _, c := range cases {
+	for i, c := range cases {
+		t.Logf("%d: %s", i, c.identifier)
+
 		s1 := Pick(c.dialect).Quote(c.identifier)
 		g.Expect(s1).To(Equal(c.expected))
 

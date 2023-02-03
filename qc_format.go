@@ -45,7 +45,7 @@ func (qc *QueryConstraint) Format(d dialect.Dialect, option ...dialect.FormatOpt
 	b := new(strings.Builder)
 	b.Grow(qc.estimateStringLength())
 
-	q := quoterFromOptions(option)
+	q := quoterFromOptions(formatOptions(option).Quoter())
 
 	if len(qc.orderBy) > 0 {
 		b.WriteString(" ORDER BY")

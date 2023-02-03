@@ -3,118 +3,92 @@ package where
 import (
 	"reflect"
 	"strings"
+
+	"github.com/rickb777/where/v2/predicate"
 )
 
-const (
-	PredicateIsNull               = " IS NULL"
-	PredicateIsNotNull            = " IS NOT NULL"
-	PredicateEqualTo              = "=?"
-	PredicateNotEqualTo           = "<>?"
-	PredicateGreaterThan          = ">?"
-	PredicateGreaterThanOrEqualTo = ">=?"
-	PredicateLessThan             = "<?"
-	PredicateLessThanOrEqualTo    = "<=?"
-	PredicateBetween              = " BETWEEN ? AND ?"
-	PredicateLike                 = " LIKE ?"
-)
+// Predicate returns a literal predicate. For example
+//
+//   - where.Predicate(`EXISTS (SELECT 1 FROM people WHERE expiry_date = CURRENT_DATE))`)
+//
+// Column quoting won't apply.
+//
+// Be careful not to allow injection attacks: do not include a string from an external
+// source in the predicate.
+func Predicate(predicate string, value ...any) Expression {
+	return Condition{Predicate: predicate, Args: value}
+}
 
 // Literal returns a literal condition on a column. For example
 //
-//	Literal("age", " > 45")
+//   - where.Literal("age", " > 45")
+//
+// The column "age" will be quoted appropriately if a formatting option
+// specified this.
 //
 // Be careful not to allow injection attacks: do not include a string from an external
 // source in the column or predicate.
 //
-// This function is the basis for all the other predicates except In/InSlice.
+// This function is the basis for most other predicates.
 func Literal(column, predicate string, value ...any) Expression {
-	//if len(value) == 0 {
-	//	return Condition{Column: column, Predicate: predicate}
-	//}
 	return Condition{Column: column, Predicate: predicate, Args: value}
 }
 
 // Null returns an 'IS NULL' condition on a column.
 func Null(column string) Expression {
-	return Literal(column, PredicateIsNull)
+	return Literal(column, predicate.IsNull)
 }
 
 // NotNull returns an 'IS NOT NULL' condition on a column. It's also possible to use Not(Null(...)).
 func NotNull(column string) Expression {
-	return Literal(column, PredicateIsNotNull)
+	return Literal(column, predicate.IsNotNull)
 }
 
 // Eq returns an equality condition on a column.
-//
-// A '?' placeholder is used so it may be necessary to replace placeholders in the
-// resulting query, e.g using 'dialect.ReplacePlaceholdersWithNumbers(query)'.
 func Eq(column string, value any) Expression {
-	return Literal(column, PredicateEqualTo, value)
+	return Literal(column, predicate.EqualTo, value)
 }
 
 // NotEq returns a not equal condition on a column.
-//
-// A '?' placeholder is used so it may be necessary to replace placeholders in the
-// resulting query, e.g using 'dialect.ReplacePlaceholdersWithNumbers(query)'.
 func NotEq(column string, value any) Expression {
-	return Literal(column, PredicateNotEqualTo, value)
+	return Literal(column, predicate.NotEqualTo, value)
 }
 
 // Gt returns a greater than condition on a column.
-//
-// A '?' placeholder is used so it may be necessary to replace placeholders in the
-// resulting query, e.g using 'dialect.ReplacePlaceholdersWithNumbers(query)'.
 func Gt(column string, value any) Expression {
-	return Literal(column, PredicateGreaterThan, value)
+	return Literal(column, predicate.GreaterThan, value)
 }
 
 // GtEq returns a greater than or equal condition on a column.
-//
-// A '?' placeholder is used so it may be necessary to replace placeholders in the
-// resulting query, e.g using 'dialect.ReplacePlaceholdersWithNumbers(query)'.
 func GtEq(column string, value any) Expression {
-	return Literal(column, PredicateGreaterThanOrEqualTo, value)
+	return Literal(column, predicate.GreaterThanOrEqualTo, value)
 }
 
 // Lt returns a less than condition on a column.
-//
-// A '?' placeholder is used so it may be necessary to replace placeholders in the
-// resulting query, e.g using 'dialect.ReplacePlaceholdersWithNumbers(query)'.
 func Lt(column string, value any) Expression {
-	return Literal(column, PredicateLessThan, value)
+	return Literal(column, predicate.LessThan, value)
 }
 
 // LtEq returns a less than or equal than condition on a column.
-//
-// A '?' placeholder is used so it may be necessary to replace placeholders in the
-// resulting query, e.g using 'dialect.ReplacePlaceholdersWithNumbers(query)'.
 func LtEq(column string, value any) Expression {
-	return Literal(column, PredicateLessThanOrEqualTo, value)
+	return Literal(column, predicate.LessThanOrEqualTo, value)
 }
 
 // Between returns a between condition on a column.
-//
-// Two '?' placeholders are used so it may be necessary to replace placeholders in the
-// resulting query, e.g using 'dialect.ReplacePlaceholdersWithNumbers(query)'.
 func Between(column string, a, b any) Expression {
-	return Literal(column, PredicateBetween, a, b)
+	return Literal(column, predicate.Between, a, b)
 }
 
 // Like returns a pattern-matching condition on a column. Be careful: this can hurt performance.
-//
-// A '?' placeholder is used so it may be necessary to replace placeholders in the
-// resulting query, e.g using 'dialect.ReplacePlaceholdersWithNumbers(query)'.
 func Like(column string, pattern string) Expression {
-	return Literal(column, PredicateLike, pattern)
+	return Literal(column, predicate.Like, pattern)
 }
 
 // In returns an 'IN' condition on a column.
-// * If there a no values, this becomes a no-op.
-// * If any value is nil, an 'IS NULL' expression is OR-ed with the 'IN' expression.
+//   - If there are no values, this becomes a no-op.
+//   - If any value is nil, an 'IS NULL' expression is OR-ed with the 'IN' expression.
 //
-// Some '?' placeholders are used so it is necessary to replace placeholders in the
-// resulting query according to SQL dialect, e.g using 'dialect.ReplacePlaceholdersWithNumbers(query)'.
-//
-// Note that this does not reflection, unlike InSlice.
+// Note that this does not use reflection, unlike InSlice.
 func In(column string, values ...any) Expression {
 	if len(values) == 0 {
 		return NoOp()
@@ -153,9 +127,9 @@ func In(column string, values ...any) Expression {
 }
 
 // InSlice returns an 'IN' condition on a column.
-// * If arg is nil, this becomes a no-op.
-// * arg is reflectively expanded as an array or slice to use all the contained values.
-// * If any value is nil, an 'IS NULL' expression is OR-ed with the 'IN' expression.
+//   - If arg is nil, this becomes a no-op.
+//   - arg is reflectively expanded as an array or slice to use all the contained values.
+//   - If any value is nil, an 'IS NULL' expression is OR-ed with the 'IN' expression.
 //
 // Some '?' placeholders are used so it is necessary to replace placeholders in the
 // resulting query according to SQL dialect, e.g using 'dialect.ReplacePlaceholdersWithNumbers(query)'.
@@ -220,21 +194,21 @@ const (
 )
 
 // Not negates an expression.
-func Not(el Expression) Expression {
-	if el == nil {
+func Not(exp Expression) Expression {
+	if exp == nil {
 		return NoOp()
 	}
-	return not{expression: el}
+	return not{expression: exp}
 }
 
 // And combines two conditions into a clause that requires they are both true.
-func (cl not) And(c2 Expression) Expression {
-	return Clause{wheres: []Expression{cl}, conjunction: and}.And(c2)
+func (exp not) And(other Expression) Expression {
+	return Clause{wheres: []Expression{exp}, conjunction: and}.And(other)
 }
 
 // Or combines two conditions into a clause that requires either is true.
-func (cl not) Or(c2 Expression) Expression {
-	return Clause{wheres: []Expression{cl}, conjunction: or}.Or(c2)
+func (exp not) Or(other Expression) Expression {
+	return Clause{wheres: []Expression{exp}, conjunction: or}.Or(other)
 }
 
 //-------------------------------------------------------------------------------------------------
@@ -249,50 +223,50 @@ func NoOp() Expression {
 //-------------------------------------------------------------------------------------------------
 
 // And combines two conditions into a clause that requires they are both true.
-func (cl Condition) And(c2 Expression) Expression {
-	return Clause{wheres: []Expression{cl}, conjunction: and}.And(c2)
+func (exp Condition) And(other Expression) Expression {
+	return Clause{wheres: []Expression{exp}, conjunction: and}.And(other)
 }
 
 // Or combines two conditions into a clause that requires either is true.
-func (cl Condition) Or(c2 Expression) Expression {
-	return Clause{wheres: []Expression{cl}, conjunction: or}.Or(c2)
+func (exp Condition) Or(other Expression) Expression {
+	return Clause{wheres: []Expression{exp}, conjunction: or}.Or(other)
 }
 
 //-------------------------------------------------------------------------------------------------
 
 // And combines two clauses into a clause that requires they are both true.
 // SQL implementation note: AND has higher precedence than OR.
-func (wh Clause) conjoin(exp Expression, conj string) Expression {
-	cl, isClause := exp.(Clause)
+func (exp Clause) conjoin(other Expression, conj string) Expression {
+	cl, isClause := other.(Clause)
 	if isClause {
-		if len(wh.wheres) == 0 {
+		if len(exp.wheres) == 0 {
 			return cl
 		} else if len(cl.wheres) == 0 {
-			return wh
-		} else if wh.conjunction == conj && cl.conjunction == conj {
-			return Clause{append(wh.wheres, cl.wheres...), conj}
+			return exp
+		} else if exp.conjunction == conj && cl.conjunction == conj {
+			return Clause{append(exp.wheres, cl.wheres...), conj}
 		}
 	} else {
 		// blank case comes from NoOp
-		if wh.conjunction == "" || wh.conjunction == conj {
-			return Clause{append(wh.wheres, exp), conj}
+		if exp.conjunction == "" || exp.conjunction == conj {
+			return Clause{append(exp.wheres, other), conj}
 		}
 	}
-	return Clause{wheres: []Expression{wh, exp}, conjunction: conj}
+	return Clause{wheres: []Expression{exp, other}, conjunction: conj}
 }
 
 // And combines two clauses into a clause that requires they are both true.
 // Parentheses will be inserted to preserve the calling order.
 // SQL implementation note: AND has higher precedence than OR.
-func (wh Clause) And(exp Expression) Expression {
-	return wh.conjoin(exp, and)
+func (exp Clause) And(other Expression) Expression {
+	return exp.conjoin(other, and)
 }
 
 // Or combines two clauses into a clause that requires either is true.
 // Parentheses will be inserted to preserve the calling order.
 // SQL implementation note: AND has higher precedence than OR.
-func (wh Clause) Or(exp Expression) Expression {
-	return wh.conjoin(exp, or)
+func (exp Clause) Or(other Expression) Expression {
+	return exp.conjoin(other, or)
 }
 
 //-------------------------------------------------------------------------------------------------

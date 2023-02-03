@@ -9,63 +9,66 @@ import (
 	"github.com/rickb777/where/v2/quote"
 )
 
-func (not not) Format(option ...dialect.FormatOption) (string, []any) {
-	prefix, inline := placeholderFromOptions(option)
-	sql, args := not.doFormat(quoterFromOptions(option))
-	return replacePlaceholders(sql, args, prefix, inline, 1)
+func (exp not) Format(option ...dialect.FormatOption) (string, []any) {
+	placeholderOption := formatOptions(option).Placeholder()
+	quoter := quoterFromOptions(formatOptions(option).Quoter())
+	sql, args := exp.doFormat(quoter)
+	return replacePlaceholders(sql, args, placeholderOption, 1)
 }
 
-func (not not) doFormat(quoter quote.Quoter) (string, []any) {
-	sql, args := not.expression.doFormat(quoter)
+func (exp not) doFormat(quoter quote.Quoter) (string, []any) {
+	sql, args := exp.expression.doFormat(quoter)
 	if sql == "" {
 		return "", args
 	}
 	return "NOT (" + sql + ")", args
 }
 
-func (not not) String() string {
-	sql, _ := not.Format(dialect.NoQuotes, dialect.Inline)
+func (exp not) String() string {
+	sql, _ := exp.Format(dialect.NoQuotes, dialect.Inline)
 	return sql
 }
 
 //-------------------------------------------------------------------------------------------------
 
-func (cl Condition) Format(option ...dialect.FormatOption) (string, []any) {
-	prefix, inline := placeholderFromOptions(option)
-	sql, args := cl.doFormat(quoterFromOptions(option))
-	return replacePlaceholders(sql, args, prefix, inline, 1)
+func (exp Condition) Format(option ...dialect.FormatOption) (string, []any) {
+	placeholderOption := formatOptions(option).Placeholder()
+	quoter := quoterFromOptions(formatOptions(option).Quoter())
+	sql, args := exp.doFormat(quoter)
+	return replacePlaceholders(sql, args, placeholderOption, 1)
 }
 
-func (cl Condition) doFormat(quoter quote.Quoter) (string, []any) {
+func (exp Condition) doFormat(quoter quote.Quoter) (string, []any) {
 	buf := &strings.Builder{}
-	quoter.QuoteW(buf, cl.Column)
-	buf.WriteString(cl.Predicate)
+	quoter.QuoteW(buf, exp.Column)
+	buf.WriteString(exp.Predicate)
 	sql := buf.String()
-	return sql, nilIfEmpty(cl.Args)
+	return sql, nilIfEmpty(exp.Args)
 }
 
-func (cl Condition) String() string {
-	sql, _ := cl.Format(dialect.NoQuotes, dialect.Inline)
+func (exp Condition) String() string {
+	sql, _ := exp.Format(dialect.NoQuotes, dialect.Inline)
 	return sql
 }
 
 //-------------------------------------------------------------------------------------------------
 
-func (wh Clause) Format(option ...dialect.FormatOption) (string, []any) {
-	prefix, inline := placeholderFromOptions(option)
-	sql, args := wh.doFormat(quoterFromOptions(option))
-	return replacePlaceholders(sql, args, prefix, inline, 1)
+func (exp Clause) Format(option ...dialect.FormatOption) (string, []any) {
+	placeholderOption := formatOptions(option).Placeholder()
+	quoter := quoterFromOptions(formatOptions(option).Quoter())
+	sql, args := exp.doFormat(quoter)
+	return replacePlaceholders(sql, args, placeholderOption, 1)
 }
 
-func (wh Clause) doFormat(quoter quote.Quoter) (string, []any) {
-	if len(wh.wheres) == 0 {
+func (exp Clause) doFormat(quoter quote.Quoter) (string, []any) {
+	if len(exp.wheres) == 0 {
 		return "", nil
 	}
 
-	sqls := make([]string, 0, len(wh.wheres))
+	sqls := make([]string, 0, len(exp.wheres))
 	var args []any
 
-	for _, where := range wh.wheres {
+	for _, where := range exp.wheres {
 		sql, a2 := where.doFormat(quoter)
 		if len(sql) > 0 {
 			sqls = append(sqls, "("+sql+")")
@@ -73,58 +76,57 @@ func (wh Clause) doFormat(quoter quote.Quoter) (string, []any) {
 		}
 	}
 
-	sql := strings.Join(sqls, wh.conjunction)
+	sql := strings.Join(sqls, exp.conjunction)
 	return sql, args
 }
 
-func (wh Clause) String() string {
-	sql, _ := wh.Format(dialect.NoQuotes, dialect.Inline)
+func (exp Clause) String() string {
+	sql, _ := exp.Format(dialect.NoQuotes, dialect.Inline)
 	return sql
 }
 
 //-------------------------------------------------------------------------------------------------
 
-func placeholderFromOptions(option []dialect.FormatOption) (prefix string, inline bool) {
-	for _, o := range option {
-		switch o {
-		case dialect.Dollar:
-			prefix = "$"
-		case dialect.AtP:
-			prefix = "@p"
-		case dialect.Inline:
-			inline = true
-		}
+func prefixFromOption(option dialect.FormatOption) (prefix string) {
+	switch option {
+	case dialect.Dollar:
+		prefix = "$"
+	case dialect.AtP:
+		prefix = "@p"
 	}
-	return prefix, inline
+	return prefix
 }
 
-func quoterFromOptions(option []dialect.FormatOption) (quoter quote.Quoter) {
+func quoterFromOptions(option dialect.FormatOption) (quoter quote.Quoter) {
 	quoter = quote.DefaultQuoter
-	for _, o := range option {
-		switch o {
-		case dialect.NoQuotes:
-			quoter = quote.None
-		case dialect.ANSIQuotes:
-			quoter = quote.ANSI
-		case dialect.Backticks:
-			quoter = quote.Backticks
-		case dialect.SquareBrackets:
-			quoter = quote.SquareBrackets
-		}
+	switch option {
+	case dialect.NoQuotes:
+		quoter = quote.None
+	case dialect.ANSIQuotes:
+		quoter = quote.ANSI
+	case dialect.Backticks:
+		quoter = quote.Backticks
+	case dialect.SquareBrackets:
+		quoter = quote.SquareBrackets
 	}
 	return quoter
 }
 
-// replacePlaceholders replaces all "?" placeholders with numbered
-// placeholders, using the given prefix.
-// For PostgreSQL these will be "$1" and upward placeholders so the prefix should be "$" (Dollar).
-// For SQL-Server there will be "@p1" and upward placeholders so the prefix should be "@p" (AtP).
-// The count will start with 'from'.
-func replacePlaceholders(sql string, args []any, prefix string, inline bool, from int) (string, []any) {
-	if inline {
-		return inlinePlaceholders(sql, args)
+func replacePlaceholders(sql string, args []any, opt dialect.FormatOption, from int) (string, []any) {
+	if opt == dialect.Inline {
+		return InlinePlaceholders(sql, args)
 	}
 
+	return ReplacePlaceholders(sql, args, opt, from)
+}
+
+// ReplacePlaceholders replaces all "?" placeholders with numbered placeholders, using the given dialect option.
+//   - For PostgreSQL these will be "$1" and upward placeholders so the prefix should be "$" (Dollar).
+//   - For SQL-Server there will be "@p1" and upward placeholders so the prefix should be "@p" (AtP).
+//
+// The count will start with 'from', or from 1.
+func ReplacePlaceholders(sql string, args []any, opt dialect.FormatOption, from ...int) (string, []any) {
+	prefix := prefixFromOption(opt)
 	if prefix == "" {
 		return sql, args
 	}
@@ -136,7 +138,11 @@ func replacePlaceholders(sql string, args []any, prefix string, inline bool, fro
 		}
 	}
 
-	count := from
+	count := 1
+	if len(from) > 0 {
+		count = from[0]
+	}
+
 	buf := &strings.Builder{}
 	buf.Grow(len(sql) + n*(len(prefix)+2))
 
@@ -153,18 +159,21 @@ func replacePlaceholders(sql string, args []any, prefix string, inline bool, fro
 	return buf.String(), nilIfEmpty(args)
 }
 
-func inlinePlaceholders(sql string, args []any) (string, []any) {
+// InlinePlaceholders replaces every '?' placeholder with the corresponding argument value.
+// Number and boolean arguments are inserted verbatim. Everything else is inserted
+// in string syntax, i.e. enclosed in single quote marks.
+func InlinePlaceholders(query string, args []any) (string, []any) {
 	n := 0
-	for _, r := range sql {
+	for _, r := range query {
 		if r == '?' {
 			n++
 		}
 	}
 
 	buf := &strings.Builder{}
-	buf.Grow(len(sql) + len(sql)/2)
+	buf.Grow(len(query) + len(query)/2) // heuristic
 
-	for _, r := range sql {
+	for _, r := range query {
 		if r == '?' && len(args) > 0 {
 			buf.WriteString(literalValue(args[0]))
 			args = args[1:]
@@ -204,10 +213,11 @@ func literalValue(v any) string {
 		return strconv.FormatFloat(float64(x), 'f', -1, 32)
 	case float64:
 		return strconv.FormatFloat(x, 'f', -1, 64)
-	default:
-		// TODO replace ' with ''
-		return fmt.Sprintf(`'%v'`, v)
 	}
+
+	s := fmt.Sprintf(`%v`, v)
+	s = strings.ReplaceAll(s, "'", "''")
+	return "'" + s + "'"
 }
 
 func nilIfEmpty(args []any) []any {
@@ -215,4 +225,26 @@ func nilIfEmpty(args []any) []any {
 		return args
 	}
 	return nil
+}
+
+//-------------------------------------------------------------------------------------------------
+
+type formatOptions []dialect.FormatOption
+
+func (opts formatOptions) Placeholder() dialect.FormatOption {
+	for _, o := range opts {
+		if o <= dialect.Inline {
+			return o
+		}
+	}
+	return 0
+}
+
+func (opts formatOptions) Quoter() dialect.FormatOption {
+	for _, o := range opts {
+		if o >= dialect.NoQuotes {
+			return o
+		}
+	}
+	return 0
 }
