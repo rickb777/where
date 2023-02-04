@@ -1,3 +1,6 @@
+// Package where provides composable expressions for WHERE and HAVING clauses in SQL.
+// These can range from the very simplest no-op to complex nested trees of 'AND' and 'OR'
+// conditions.
 package where
 
 import (
@@ -30,6 +33,7 @@ const (
 )
 
 // Where constructs the SQL clause beginning "WHERE ...".
+// If the expression is empty or nil, the returned string will be blank.
 // Optional parameters may be supplied. Otherwise, by default, quote.DefaultQuoter is used
 // and the result will contain '?' style placeholders.
 func Where(wh Expression, option ...dialect.FormatOption) (string, []interface{}) {
@@ -37,6 +41,7 @@ func Where(wh Expression, option ...dialect.FormatOption) (string, []interface{}
 }
 
 // Having constructs the SQL clause beginning "HAVING ...".
+// If the expression is empty or nil, the returned string will be blank.
 // Optional parameters may be supplied. Otherwise, by default, quote.DefaultQuoter is used
 // and the result will contain '?' style placeholders.
 func Having(wh Expression, option ...dialect.FormatOption) (string, []interface{}) {

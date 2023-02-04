@@ -459,7 +459,7 @@ func BenchmarkBuildWhereClause_happyCases_String(b *testing.B) {
 //-------------------------------------------------------------------------------------------------
 
 func ExampleWhere() {
-	// in this example, identifiers will be unquoted
+	// in this example, identifiers will be unquoted (this is the default)
 	quote.DefaultQuoter = quote.None
 
 	// some simple expressions
@@ -468,8 +468,8 @@ func ExampleWhere() {
 	ageGt10 := where.Gt("age", 10)
 	likes := where.In("likes", "cats", "dogs")
 
-	// build a compound expression - this is a static expression
-	// but it could be based on conditions instead
+	// Build a compound expression - this is a static expression
+	// but it could be built up in stages depending on if-conditions.
 	wh := where.And(where.Or(nameEqJohn, nameEqPeter), ageGt10, likes)
 
 	// For Postgres, the placeholders have to be altered. It's necessary to do
@@ -491,7 +491,7 @@ func ExampleWhere_mysqlUsingParameters() {
 	likes := where.In("likes", "cats", "dogs")
 
 	// Build a compound expression - this is a static expression
-	// but it could be built up in stages depending on any conditions.
+	// but it could be built up in stages depending on if-conditions.
 	wh := where.And(where.Or(nameEqJohn, nameEqPeter), ageGt10, likes)
 
 	// Format the 'where' clause, quoting all the identifiers for MySql.
@@ -512,7 +512,7 @@ func ExampleWhere_postgresUsingParameters() {
 	likes := where.In("likes", "cats", "dogs")
 
 	// Build a compound expression - this is a static expression
-	// but it could be built up in stages depending on any conditions.
+	// but it could be built up in stages depending on if-conditions.
 	wh := where.And(where.Or(nameEqJohn, nameEqPeter), ageGt10, likes)
 
 	// Format the 'where' clause, quoting all the identifiers for Postgres
@@ -524,5 +524,28 @@ func ExampleWhere_postgresUsingParameters() {
 	fmt.Println(args)
 
 	// Output: WHERE (("name"=$1) OR ("name"=$2)) AND ("age">$3) AND ("likes" IN ($4,$5))
+	// [John Peter 10 cats dogs]
+}
+
+func ExampleWhere_sqlserverUsingParameters() {
+	// some simple expressions
+	nameEqJohn := where.Eq("name", "John")
+	nameEqPeter := where.Eq("name", "Peter")
+	ageGt10 := where.Gt("age", 10)
+	likes := where.In("likes", "cats", "dogs")
+
+	// Build a compound expression - this is a static expression
+	// but it could be built up in stages depending on if-conditions.
+	wh := where.And(where.Or(nameEqJohn, nameEqPeter), ageGt10, likes)
+
+	// Format the 'where' clause, quoting all the identifiers for Postgres
+	// and replacing all the '?' parameters with "$1" numbered parameters,
+	// counting from 1.
+	clause, args := where.Where(wh, dialect.SquareBrackets, dialect.AtP)
+
+	fmt.Println(clause)
+	fmt.Println(args)
+
+	// Output: WHERE (([name]=@p1) OR ([name]=@p2)) AND ([age]>@p3) AND ([likes] IN (@p4,@p5))
 	// [John Peter 10 cats dogs]
 }

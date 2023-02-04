@@ -111,12 +111,31 @@ func TestNilQueryConstraint_SqlServer(t *testing.T) {
 }
 
 func ExampleOrderBy() {
+	// OrderBy understands that Asc and Desc apply to the precending columns
 	qc := where.OrderBy("foo", "bar").Desc().OrderBy("baz").Asc().Limit(10).Offset(20)
 
-	s := qc.Format(dialect.Sqlite, dialect.ANSIQuotes)
+	// we chose Sqlite, but Mysql nnd Postgres would give the same result
+	s := qc.Format(dialect.Sqlite, dialect.NoQuotes)
 	fmt.Println(s)
 
-	// Output:  ORDER BY "foo" DESC, "bar" DESC, "baz" ASC LIMIT 10 OFFSET 20
+	// Sqlite doesn't use 'TOP' so it will be blank
+	s = qc.FormatTOP(dialect.Sqlite)
+	fmt.Println(s)
+
+	// Output:  ORDER BY foo DESC, bar DESC, baz ASC LIMIT 10 OFFSET 20
+	//
+}
+
+func ExampleOrderBy_nulls() {
+	// OrderBy also includes a "NULLS LAST" phrase.
+	// NullsFirst() can be used instead.
+	qc := where.OrderBy("foo").NullsLast()
+
+	// For Postgres, we're using double-quotes.
+	s := qc.Format(dialect.Postgres, dialect.ANSIQuotes)
+	fmt.Println(s)
+
+	// Output:  ORDER BY "foo" NULLS LAST
 }
 
 func ExampleLimit() {

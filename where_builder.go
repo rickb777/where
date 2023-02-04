@@ -24,7 +24,7 @@ func Predicate(predicate string, value ...any) Expression {
 //   - where.Literal("age", " > 45")
 //
 // The column "age" will be quoted appropriately if a formatting option
-// specified this.
+// specifies this.
 //
 // Be careful not to allow injection attacks: do not include a string from an external
 // source in the column or predicate.
