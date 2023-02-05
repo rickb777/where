@@ -85,7 +85,7 @@ type not struct {
 //
 // Column can be left blank; this allows the predicate to be a sub-query such as EXISTS(...), e.g.
 //
-//	expr := where.Condition{Predicate: "EXISTS (SELECT 1 FROM offers WHERE expiry_date = CURRENT_DATE))"}
+//	expr := where.Condition{Predicate: "EXISTS (SELECT 1 FROM offers WHERE expiry_date = CURRENT_DATE)"}
 //
 // The functions Literal and Predicate provide for these cases.
 type Condition struct {
@@ -95,8 +95,8 @@ type Condition struct {
 
 //-------------------------------------------------------------------------------------------------
 
-// Clause is a compound expression. It contains a list of zero or expressions and
-// records whether to conjoin them using 'AND' or 'OR'.
+// Clause is a compound expression. It contains a list of zero or more expressions and
+// notes whether to conjoin them using 'AND' or 'OR'.
 type Clause struct {
 	wheres      []Expression
 	conjunction string
