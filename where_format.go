@@ -9,6 +9,7 @@ import (
 	"github.com/rickb777/where/v2/quote"
 )
 
+// Format formats an expression, returning the formatted string and the list of arguments.
 func (exp not) Format(option ...dialect.FormatOption) (string, []any) {
 	placeholderOption := formatOptions(option).Placeholder()
 	quoter := quoterFromOptions(formatOptions(option).Quoter())
@@ -21,7 +22,10 @@ func (exp not) doFormat(quoter quote.Quoter) (string, []any) {
 	if sql == "" {
 		return "", args
 	}
-	return "NOT (" + sql + ")", args
+	if _, isClause := exp.expression.(Clause); isClause {
+		sql = "(" + sql + ")"
+	}
+	return "NOT " + sql, args
 }
 
 func (exp not) String() string {
@@ -31,6 +35,7 @@ func (exp not) String() string {
 
 //-------------------------------------------------------------------------------------------------
 
+// Format formats an expression, returning the formatted string and the list of arguments.
 func (exp Condition) Format(option ...dialect.FormatOption) (string, []any) {
 	placeholderOption := formatOptions(option).Placeholder()
 	quoter := quoterFromOptions(formatOptions(option).Quoter())
@@ -53,6 +58,7 @@ func (exp Condition) String() string {
 
 //-------------------------------------------------------------------------------------------------
 
+// Format formats an expression, returning the formatted string and the list of arguments.
 func (exp Clause) Format(option ...dialect.FormatOption) (string, []any) {
 	placeholderOption := formatOptions(option).Placeholder()
 	quoter := quoterFromOptions(formatOptions(option).Quoter())
@@ -71,7 +77,15 @@ func (exp Clause) doFormat(quoter quote.Quoter) (string, []any) {
 	for _, where := range exp.wheres {
 		sql, a2 := where.doFormat(quoter)
 		if len(sql) > 0 {
-			sqls = append(sqls, "("+sql+")")
+			switch w := where.(type) {
+			case Clause:
+				if w.conjunction != exp.conjunction {
+					sql = "(" + sql + ")"
+				}
+			case not:
+				sql = "(" + sql + ")"
+			}
+			sqls = append(sqls, sql)
 			args = append(args, a2...)
 		}
 	}
@@ -121,8 +135,8 @@ func replacePlaceholders(sql string, args []any, opt dialect.FormatOption, from 
 }
 
 // ReplacePlaceholders replaces all "?" placeholders with numbered placeholders, using the given dialect option.
-//   - For PostgreSQL these will be "$1" and upward placeholders so the prefix should be "$" (Dollar).
-//   - For SQL-Server there will be "@p1" and upward placeholders so the prefix should be "@p" (AtP).
+//   - For PostgreSQL these will be "$1" and upward placeholders so the dalect.Dollar option should be supplied.
+//   - For SQL-Server there will be "@p1" and upward placeholders so the dialect.AtP should be supplied.
 //
 // The count will start with 'from', or from 1.
 func ReplacePlaceholders(sql string, args []any, opt dialect.FormatOption, from ...int) (string, []any) {
@@ -162,6 +176,8 @@ func ReplacePlaceholders(sql string, args []any, opt dialect.FormatOption, from 
 // InlinePlaceholders replaces every '?' placeholder with the corresponding argument value.
 // Number and boolean arguments are inserted verbatim. Everything else is inserted
 // in string syntax, i.e. enclosed in single quote marks.
+//
+// The modified string is returned, along with any remaining arguments.
 func InlinePlaceholders(query string, args []any) (string, []any) {
 	n := 0
 	for _, r := range query {

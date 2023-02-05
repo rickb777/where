@@ -90,7 +90,8 @@ func (qc *QueryConstraint) Limit(n int) *QueryConstraint {
 	return qc
 }
 
-// Offset sets the offset into the result set; previous items will be discarded.
+// Offset sets the offset into the result set. The database will skip earlier records.
+// It is usually important to set the order of results explicitly (see OrderBy).
 func (qc *QueryConstraint) Offset(n int) *QueryConstraint {
 	qc.offset = n
 	return qc

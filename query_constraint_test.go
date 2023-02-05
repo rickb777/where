@@ -46,7 +46,7 @@ var topConstraintCases = map[string]*where.QueryConstraint{
 	`6 TOP (10)`: where.OrderBy("foo").Desc().Limit(10).Offset(20),
 }
 
-func TestQueryConstraint1(t *testing.T) {
+func TestQueryConstraint_Format(t *testing.T) {
 	g := NewGomegaWithT(t)
 
 	for i, c := range queryConstraintAnsiQuoteCases {
@@ -59,7 +59,7 @@ func TestQueryConstraint1(t *testing.T) {
 	}
 }
 
-func TestQueryConstraint2(t *testing.T) {
+func TestQueryConstraint_String(t *testing.T) {
 	g := NewGomegaWithT(t)
 
 	for exp, c := range queryConstraintAnsiQuoteCases {
@@ -111,10 +111,13 @@ func TestNilQueryConstraint_SqlServer(t *testing.T) {
 }
 
 func ExampleOrderBy() {
-	// OrderBy understands that Asc and Desc apply to the precending columns
-	qc := where.OrderBy("foo", "bar").Desc().OrderBy("baz").Asc().Limit(10).Offset(20)
+	// OrderBy understands that Asc and Desc apply to the preceding columns
+	qc := where.OrderBy("foo", "bar").Desc().
+		OrderBy("baz").Asc().
+		Limit(10).
+		Offset(20)
 
-	// we chose Sqlite, but Mysql nnd Postgres would give the same result
+	// here we chose Sqlite, but Mysql nnd Postgres would give the same result
 	s := qc.Format(dialect.Sqlite, dialect.NoQuotes)
 	fmt.Println(s)
 
@@ -126,9 +129,8 @@ func ExampleOrderBy() {
 	//
 }
 
-func ExampleOrderBy_nulls() {
+func ExampleQueryConstraint_NullsLast() {
 	// OrderBy also includes a "NULLS LAST" phrase.
-	// NullsFirst() can be used instead.
 	qc := where.OrderBy("foo").NullsLast()
 
 	// For Postgres, we're using double-quotes.
@@ -138,7 +140,20 @@ func ExampleOrderBy_nulls() {
 	// Output:  ORDER BY "foo" NULLS LAST
 }
 
+func ExampleQueryConstraint_NullsFirst() {
+	// OrderBy also includes a "NULLS LAST" phrase.
+	qc := where.OrderBy("foo").NullsFirst()
+
+	// For Postgres, we're using double-quotes.
+	s := qc.Format(dialect.Postgres, dialect.ANSIQuotes)
+	fmt.Println(s)
+
+	// Output:  ORDER BY "foo" NULLS FIRST
+}
+
 func ExampleLimit() {
+	// In this example, we can see how SqlServer needs different syntax
+	// to Sqlite, Postgres, Mysql etc.
 	qc := where.Limit(10).Offset(20)
 
 	s1 := qc.Format(dialect.Sqlite)
@@ -153,4 +168,14 @@ func ExampleLimit() {
 	// Output: SQlite:      LIMIT 10 OFFSET 20
 	// SQL-Server:  TOP (10)
 	// SQL-Server:  OFFSET 20
+}
+
+func ExampleOffset() {
+	// In this example, we start a query constraint using Offset	.
+	qc := where.Offset(20)
+
+	s := qc.Format(dialect.Postgres)
+	fmt.Println(s)
+
+	// Output: OFFSET 20
 }

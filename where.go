@@ -1,6 +1,7 @@
 // Package where provides composable expressions for WHERE and HAVING clauses in SQL.
 // These can range from the very simplest no-op to complex nested trees of 'AND' and 'OR'
-// conditions.
+// conditions. To get started, first look at `Expression` and its functions. The examples
+// show how these can be used.
 package where
 
 import (
@@ -71,20 +72,22 @@ type not struct {
 //-------------------------------------------------------------------------------------------------
 
 // Condition is a simple condition such as an equality test. For convenience, use the
-// factory functions 'Eq', 'GtEq' etc.
+// factory functions 'Eq', 'GtEq', 'Null', 'In' etc.
 //
 // This can also be constructed directly, which will be useful for non-portable
 // cases, such as Postgresql 'SIMILAR TO'
 //
-//	expr := where.Condition{Column: "name", Predicate: " SIMILAR TO ?", Args: []interface{}{pattern}}
+//	expr := where.Condition{Column: "name", Predicate: " SIMILAR TO ?", Args: []any{pattern}}
 //
-// Also for literal values (taking care to protect against injection attacks)
+// Also for literal values (taking care to protect against injection attacks), e.g.
 //
-//	expr := where.Condition{Column: "age", Predicate: " = 47", Args: nil}
+//	expr := where.Condition{Column: "age", Predicate: " = 47"}
 //
-// Column can be left blank; this allows the predicate to be a sub-query such as EXISTS(...).
+// Column can be left blank; this allows the predicate to be a sub-query such as EXISTS(...), e.g.
 //
-// See Literal.
+//	expr := where.Condition{Predicate: "EXISTS (SELECT 1 FROM offers WHERE expiry_date = CURRENT_DATE))"}
+//
+// The functions Literal and Predicate provide for these cases.
 type Condition struct {
 	Column, Predicate string
 	Args              []interface{}
@@ -92,7 +95,8 @@ type Condition struct {
 
 //-------------------------------------------------------------------------------------------------
 
-// Clause is a compound expression.
+// Clause is a compound expression. It contains a list of zero or expressions and
+// records whether to conjoin them using 'AND' or 'OR'.
 type Clause struct {
 	wheres      []Expression
 	conjunction string

@@ -55,6 +55,9 @@ func (d Dialect) Placeholder() FormatOption {
 	return Query
 }
 
+// Quoter returns the corresponding MySqlQuoter, PostgresQuoter, SqliteQuoter
+// MSSqlQuoter or the quote.DefaultQuoter. All of these can be configured before
+// first use.
 func (d Dialect) Quoter() quote.Quoter {
 	switch d {
 	case Mysql:

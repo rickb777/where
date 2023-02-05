@@ -10,7 +10,7 @@
 * Also supports dynamic `LIMIT`, `OFFSET` and `ORDER BY` clauses. 
 * Allows the identifiers to be quoted to suit different SQL dialects, or not at all.
 * `dialect` package supports different placeholder styles.
-* `quote` package supports quoting SQL identifiers in back-ticks, double quotes, or nothing.
+* `quote` package supports quoting SQL identifiers in back-ticks, double quotes, square barckets, or nothing.
 
 ## Install
 
@@ -25,6 +25,10 @@ go get github.com/rickb777/where/v2
 Package `where` provides composable expressions for **WHERE** and **HAVING** clauses in SQL.
 These can range from the very simplest no-op to complex nested trees of **AND** and **OR**
 conditions.
+
+In the naive approach, strings can be concatenated to construct lists of expression that are
+AND-ed together. However, mixing AND with OR makes things much more difficult. So this package
+does the work for you.
 
 Also in this package are query constraints to provide **ORDER BY**, **LIMIT** and **OFFSET**
 clauses, along with 'TOP' for MS-SQL. These are similar to **WHERE** clauses except literal values

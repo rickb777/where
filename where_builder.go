@@ -9,7 +9,7 @@ import (
 
 // Predicate returns a literal predicate. For example
 //
-//   - where.Predicate(`EXISTS (SELECT 1 FROM people WHERE expiry_date = CURRENT_DATE))`)
+//   - where.Predicate(`EXISTS (SELECT 1 FROM offers WHERE expiry_date = CURRENT_DATE))`)
 //
 // Column quoting won't apply.
 //
