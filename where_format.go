@@ -131,7 +131,7 @@ func replacePlaceholders(sql string, args []any, opt dialect.FormatOption, from 
 		return InlinePlaceholders(sql, args)
 	}
 
-	return ReplacePlaceholders(sql, args, opt, from)
+	return ReplacePlaceholders(sql, opt, from), nilIfEmpty(args)
 }
 
 // ReplacePlaceholders replaces all "?" placeholders with numbered placeholders, using the given dialect option.
@@ -139,10 +139,10 @@ func replacePlaceholders(sql string, args []any, opt dialect.FormatOption, from 
 //   - For SQL-Server there will be "@p1" and upward placeholders so the dialect.AtP should be supplied.
 //
 // The count will start with 'from', or from 1.
-func ReplacePlaceholders(sql string, args []any, opt dialect.FormatOption, from ...int) (string, []any) {
+func ReplacePlaceholders(sql string, opt dialect.FormatOption, from ...int) string {
 	prefix := prefixFromOption(opt)
 	if prefix == "" {
-		return sql, args
+		return sql
 	}
 
 	n := 0
@@ -170,7 +170,7 @@ func ReplacePlaceholders(sql string, args []any, opt dialect.FormatOption, from 
 		}
 	}
 
-	return buf.String(), nilIfEmpty(args)
+	return buf.String()
 }
 
 // InlinePlaceholders replaces every '?' placeholder with the corresponding argument value.
