@@ -10,8 +10,8 @@ import (
 	"github.com/rickb777/where/v2/quote"
 )
 
-var nameEqFred = where.Eq("name", "Fred")
-var nameEqJohn = where.Eq("name", "John")
+var nameIsFred = where.Eq("name", "Fred")
+var nameIsJohn = where.Eq("name", "John")
 var ageLt10Int = where.Lt("age", 10)
 var ageGt5Int = where.Gt("age", 5)
 
@@ -68,7 +68,7 @@ var (
 		},
 
 		{
-			wh:           nameEqFred,
+			wh:           nameIsFred,
 			expMySql:     " WHERE `name`=?",
 			expPostgres:  ` WHERE "name"=$1`,
 			expSqlServer: ` WHERE [name]=@p1`,
@@ -86,7 +86,7 @@ var (
 		},
 
 		{
-			wh:           where.NoOp().And(nameEqFred),
+			wh:           where.NoOp().And(nameIsFred),
 			expMySql:     " WHERE `name`=?",
 			expPostgres:  ` WHERE "name"=$1`,
 			expSqlServer: ` WHERE [name]=@p1`,
@@ -95,7 +95,7 @@ var (
 		},
 
 		{
-			wh:           nameEqFred.And(where.NoOp()),
+			wh:           nameIsFred.And(where.NoOp()),
 			expMySql:     " WHERE `name`=?",
 			expPostgres:  ` WHERE "name"=$1`,
 			expSqlServer: ` WHERE [name]=@p1`,
@@ -104,7 +104,7 @@ var (
 		},
 
 		{
-			wh:           nameEqFred.And(where.Gt("age", 10)),
+			wh:           nameIsFred.And(where.Gt("age", 10)),
 			expMySql:     " WHERE `name`=? AND `age`>?",
 			expPostgres:  ` WHERE "name"=$1 AND "age">$2`,
 			expSqlServer: ` WHERE [name]=@p1 AND [age]>@p2`,
@@ -113,7 +113,7 @@ var (
 		},
 
 		{
-			wh:           nameEqFred.Or(where.Gt("age", 10)),
+			wh:           nameIsFred.Or(where.Gt("age", 10)),
 			expMySql:     " WHERE `name`=? OR `age`>?",
 			expPostgres:  ` WHERE "name"=$1 OR "age">$2`,
 			expSqlServer: ` WHERE [name]=@p1 OR [age]>@p2`,
@@ -122,7 +122,7 @@ var (
 		},
 
 		{
-			wh:           nameEqFred.And(ageGt5Int).And(where.Gt("weight", 15)),
+			wh:           nameIsFred.And(ageGt5Int).And(where.Gt("weight", 15)),
 			expMySql:     " WHERE `name`=? AND `age`>? AND `weight`>?",
 			expPostgres:  ` WHERE "name"=$1 AND "age">$2 AND "weight">$3`,
 			expSqlServer: ` WHERE [name]=@p1 AND [age]>@p2 AND [weight]>@p3`,
@@ -131,7 +131,7 @@ var (
 		},
 
 		{
-			wh:           nameEqFred.Or(ageGt5Int).Or(where.Gt("weight", 15)),
+			wh:           nameIsFred.Or(ageGt5Int).Or(where.Gt("weight", 15)),
 			expMySql:     " WHERE `name`=? OR `age`>? OR `weight`>?",
 			expPostgres:  ` WHERE "name"=$1 OR "age">$2 OR "weight">$3`,
 			expSqlServer: ` WHERE [name]=@p1 OR [age]>@p2 OR [weight]>@p3`,
@@ -228,7 +228,7 @@ var (
 		},
 
 		{
-			wh:           nameEqFred.Or(nameEqJohn),
+			wh:           nameIsFred.Or(nameIsJohn),
 			expMySql:     " WHERE `name`=? OR `name`=?",
 			expPostgres:  ` WHERE "name"=$1 OR "name"=$2`,
 			expSqlServer: ` WHERE [name]=@p1 OR [name]=@p2`,
@@ -237,7 +237,7 @@ var (
 		},
 
 		{
-			wh:           where.Not(nameEqFred),
+			wh:           where.Not(nameIsFred),
 			expMySql:     " WHERE NOT `name`=?",
 			expPostgres:  ` WHERE NOT "name"=$1`,
 			expSqlServer: ` WHERE NOT [name]=@p1`,
@@ -246,7 +246,7 @@ var (
 		},
 
 		{
-			wh:           where.Not(where.Not(nameEqFred)),
+			wh:           where.Not(where.Not(nameIsFred)),
 			expMySql:     " WHERE NOT NOT `name`=?",
 			expPostgres:  ` WHERE NOT NOT "name"=$1`,
 			expSqlServer: ` WHERE NOT NOT [name]=@p1`,
@@ -255,7 +255,7 @@ var (
 		},
 
 		{
-			wh:           where.Not(nameEqFred.And(ageLt10Int)),
+			wh:           where.Not(nameIsFred.And(ageLt10Int)),
 			expMySql:     " WHERE NOT (`name`=? AND `age`<?)",
 			expPostgres:  ` WHERE NOT ("name"=$1 AND "age"<$2)`,
 			expSqlServer: ` WHERE NOT ([name]=@p1 AND [age]<@p2)`,
@@ -264,7 +264,7 @@ var (
 		},
 
 		{
-			wh:           where.Not(nameEqFred.Or(ageLt10Int)),
+			wh:           where.Not(nameIsFred.Or(ageLt10Int)),
 			expMySql:     " WHERE NOT (`name`=? OR `age`<?)",
 			expPostgres:  ` WHERE NOT ("name"=$1 OR "age"<$2)`,
 			expSqlServer: ` WHERE NOT ([name]=@p1 OR [age]<@p2)`,
@@ -273,7 +273,7 @@ var (
 		},
 
 		{
-			wh:           where.Not(nameEqFred).And(ageLt10Int),
+			wh:           where.Not(nameIsFred).And(ageLt10Int),
 			expMySql:     " WHERE (NOT `name`=?) AND `age`<?",
 			expPostgres:  ` WHERE (NOT "name"=$1) AND "age"<$2`,
 			expSqlServer: ` WHERE (NOT [name]=@p1) AND [age]<@p2`,
@@ -282,7 +282,7 @@ var (
 		},
 
 		{
-			wh:           where.Not(nameEqFred).Or(ageLt10Int),
+			wh:           where.Not(nameIsFred).Or(ageLt10Int),
 			expMySql:     " WHERE (NOT `name`=?) OR `age`<?",
 			expPostgres:  ` WHERE (NOT "name"=$1) OR "age"<$2`,
 			expSqlServer: ` WHERE (NOT [name]=@p1) OR [age]<@p2`,
@@ -291,7 +291,7 @@ var (
 		},
 
 		{
-			wh:           where.And(nameEqFred, nil, ageLt10Int),
+			wh:           where.And(nameIsFred, nil, ageLt10Int),
 			expMySql:     " WHERE `name`=? AND `age`<?",
 			expPostgres:  ` WHERE "name"=$1 AND "age"<$2`,
 			expSqlServer: ` WHERE [name]=@p1 AND [age]<@p2`,
@@ -300,7 +300,7 @@ var (
 		},
 
 		{
-			wh:           where.Or(nameEqFred, nil, ageLt10Int),
+			wh:           where.Or(nameIsFred, nil, ageLt10Int),
 			expMySql:     " WHERE `name`=? OR `age`<?",
 			expPostgres:  ` WHERE "name"=$1 OR "age"<$2`,
 			expSqlServer: ` WHERE [name]=@p1 OR [age]<@p2`,
@@ -309,7 +309,7 @@ var (
 		},
 
 		{
-			wh:           where.And(nameEqFred).And(where.And(ageLt10Int)),
+			wh:           where.And(nameIsFred).And(where.And(ageLt10Int)),
 			expMySql:     " WHERE `name`=? AND `age`<?",
 			expPostgres:  ` WHERE "name"=$1 AND "age"<$2`,
 			expSqlServer: ` WHERE [name]=@p1 AND [age]<@p2`,
@@ -336,7 +336,7 @@ var (
 		},
 
 		{
-			wh:           where.And(nameEqFred.Or(nameEqJohn), ageLt10Int),
+			wh:           where.And(nameIsFred.Or(nameIsJohn), ageLt10Int),
 			expMySql:     " WHERE (`name`=? OR `name`=?) AND `age`<?",
 			expPostgres:  ` WHERE ("name"=$1 OR "name"=$2) AND "age"<$3`,
 			expSqlServer: ` WHERE ([name]=@p1 OR [name]=@p2) AND [age]<@p3`,
@@ -345,7 +345,7 @@ var (
 		},
 
 		{
-			wh:           where.Or(nameEqFred, ageLt10Int.And(ageGt5Int)),
+			wh:           where.Or(nameIsFred, ageLt10Int.And(ageGt5Int)),
 			expMySql:     " WHERE `name`=? OR (`age`<? AND `age`>?)",
 			expPostgres:  ` WHERE "name"=$1 OR ("age"<$2 AND "age">$3)`,
 			expSqlServer: ` WHERE [name]=@p1 OR ([age]<@p2 AND [age]>@p3)`,
@@ -354,7 +354,7 @@ var (
 		},
 
 		{
-			wh:           where.Or(nameEqFred, nameEqJohn).And(ageGt5Int),
+			wh:           where.Or(nameIsFred, nameIsJohn).And(ageGt5Int),
 			expMySql:     " WHERE (`name`=? OR `name`=?) AND `age`>?",
 			expPostgres:  ` WHERE ("name"=$1 OR "name"=$2) AND "age">$3`,
 			expSqlServer: ` WHERE ([name]=@p1 OR [name]=@p2) AND [age]>@p3`,
@@ -363,7 +363,7 @@ var (
 		},
 
 		{
-			wh:           where.Or(nameEqFred, nameEqJohn, where.And(ageGt5Int)), // 'And' gets simplified away
+			wh:           where.Or(nameIsFred, nameIsJohn, where.And(ageGt5Int)), // 'And' gets simplified away
 			expMySql:     " WHERE `name`=? OR `name`=? OR `age`>?",
 			expPostgres:  ` WHERE "name"=$1 OR "name"=$2 OR "age">$3`,
 			expSqlServer: ` WHERE [name]=@p1 OR [name]=@p2 OR [age]>@p3`,
@@ -372,7 +372,7 @@ var (
 		},
 
 		{
-			wh:           where.Or(nameEqFred, where.Predicate(`EXISTS (SELECT 1 FROM people WHERE expiry_date = CURRENT_DATE)`)),
+			wh:           where.Or(nameIsFred, where.Predicate(`EXISTS (SELECT 1 FROM people WHERE expiry_date = CURRENT_DATE)`)),
 			expMySql:     " WHERE `name`=? OR EXISTS (SELECT 1 FROM people WHERE expiry_date = CURRENT_DATE)",
 			expPostgres:  ` WHERE "name"=$1 OR EXISTS (SELECT 1 FROM people WHERE expiry_date = CURRENT_DATE)`,
 			expSqlServer: ` WHERE [name]=@p1 OR EXISTS (SELECT 1 FROM people WHERE expiry_date = CURRENT_DATE)`,

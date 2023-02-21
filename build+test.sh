@@ -15,6 +15,7 @@ function v
 go mod download
 
 if ! type -p shadow; then
+  v go get     golang.org/x/tools/go/analysis/passes/shadow/cmd/shadow
   v go install golang.org/x/tools/go/analysis/passes/shadow/cmd/shadow
 fi
 

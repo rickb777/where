@@ -3,9 +3,9 @@ module github.com/rickb777/where/v2
 go 1.18
 
 require (
-	github.com/onsi/gomega v1.26.0
-	golang.org/x/net v0.5.0 // indirect
-	golang.org/x/text v0.6.0 // indirect
+	github.com/onsi/gomega v1.27.1
+	golang.org/x/net v0.7.0 // indirect
+	golang.org/x/text v0.7.0 // indirect
 )
 
 require (
