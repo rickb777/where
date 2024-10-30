@@ -1,11 +1,13 @@
 module github.com/rickb777/where/v2
 
-go 1.19
+go 1.22
+
+toolchain go1.23.2
 
 require (
-	github.com/onsi/gomega v1.33.1
-	golang.org/x/net v0.27.0 // indirect
-	golang.org/x/text v0.16.0 // indirect
+	github.com/onsi/gomega v1.35.0
+	golang.org/x/net v0.30.0 // indirect
+	golang.org/x/text v0.19.0 // indirect
 )
 
 require (
