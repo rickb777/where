@@ -2,10 +2,10 @@ package where_test
 
 import (
 	"fmt"
+	"github.com/rickb777/expect"
 	"strings"
 	"testing"
 
-	. "github.com/onsi/gomega"
 	"github.com/rickb777/where/v2"
 	"github.com/rickb777/where/v2/dialect"
 )
@@ -47,29 +47,25 @@ var topConstraintCases = map[string]*where.QueryConstraint{
 }
 
 func TestQueryConstraint_Format(t *testing.T) {
-	g := NewGomegaWithT(t)
-
 	for i, c := range queryConstraintAnsiQuoteCases {
 		sql1 := c.qc.Format(dialect.Sqlite, dialect.ANSIQuotes)
-		g.Expect(sql1).To(Equal(c.exp), "%d: %v", i, c)
+		expect.String(sql1).Info("%d: %v", i, c).ToBe(t, c.exp)
 
 		exp2 := strings.ReplaceAll(c.exp, `"`, ``)
 		sql2 := c.qc.Format(dialect.Sqlite, dialect.NoQuotes)
-		g.Expect(sql2).To(Equal(exp2), "%d: %v", i, c)
+		expect.String(sql2).Info("%d: %v", i, c).ToBe(t, exp2)
 	}
 }
 
 func TestQueryConstraint_String(t *testing.T) {
-	g := NewGomegaWithT(t)
-
 	for exp, c := range queryConstraintAnsiQuoteCases {
 		if c.qc != nil {
 			sql := c.qc.Format(dialect.Sqlite, dialect.ANSIQuotes)
-			g.Expect(sql).To(Equal(c.exp), exp)
+			expect.String(sql).Info(exp).ToBe(t, c.exp)
 
 			expected := strings.ReplaceAll(c.exp, `"`, ``)
 			sql = c.qc.String()
-			g.Expect(sql).To(Equal(expected), exp)
+			expect.String(sql).Info(exp).ToBe(t, expected)
 		}
 	}
 }
@@ -83,31 +79,27 @@ func BenchmarkQueryConstraint(b *testing.B) {
 }
 
 func TestQueryConstraint_SqlServer(t *testing.T) {
-	g := NewGomegaWithT(t)
-
 	for exp, qc := range topConstraintCases {
 		top := qc.FormatTOP(dialect.SqlServer)
-		g.Expect(top).To(Equal(exp[1:]), exp)
+		expect.String(top).Info(exp).ToBe(t, exp[1:])
 	}
 
 	for exp, qc := range topConstraintCases {
 		if qc != nil {
 			top := qc.FormatTOP(dialect.SqlServer)
-			g.Expect(top).To(Equal(exp[1:]), exp)
+			expect.String(top).Info(exp).ToBe(t, exp[1:])
 		}
 	}
 }
 
 func TestNilQueryConstraint_SqlServer(t *testing.T) {
-	g := NewGomegaWithT(t)
-
 	var qc where.QueryConstraint
 
 	top := qc.FormatTOP(dialect.SqlServer)
 	sql := qc.Format(dialect.SqlServer)
 
-	g.Expect(top).To(Equal(""))
-	g.Expect(sql).To(Equal(""))
+	expect.String(top).ToBe(t, "")
+	expect.String(sql).ToBe(t, "")
 }
 
 func ExampleOrderBy() {

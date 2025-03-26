@@ -1,15 +1,12 @@
 package quote
 
 import (
+	"github.com/rickb777/expect"
 	"strings"
 	"testing"
-
-	. "github.com/onsi/gomega"
 )
 
 func TestAnsiQuote(t *testing.T) {
-	g := NewGomegaWithT(t)
-
 	cases := []struct {
 		identifier, dialect, expected string
 	}{
@@ -99,11 +96,11 @@ func TestAnsiQuote(t *testing.T) {
 		t.Logf("%d: %s", i, c.identifier)
 
 		s1 := Pick(c.dialect).Quote(c.identifier)
-		g.Expect(s1).To(Equal(c.expected))
+		expect.String(s1).Info(i).ToBe(t, c.expected)
 
 		buf := &strings.Builder{}
 		Pick(c.dialect).QuoteW(buf, c.identifier)
 		s2 := buf.String()
-		g.Expect(s2).To(Equal(c.expected))
+		expect.String(s2).Info(i).ToBe(t, c.expected)
 	}
 }

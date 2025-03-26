@@ -2,9 +2,9 @@ package where_test
 
 import (
 	"fmt"
+	"github.com/rickb777/expect"
 	"testing"
 
-	. "github.com/onsi/gomega"
 	"github.com/rickb777/where/v2"
 	"github.com/rickb777/where/v2/dialect"
 	"github.com/rickb777/where/v2/quote"
@@ -399,46 +399,38 @@ var (
 )
 
 func TestBuildWhereClause_String_happyCases(t *testing.T) {
-	g := NewGomegaWithT(t)
-
 	for i, c := range buildWhereClauseHappyCases {
 		t.Logf("%d: %s", i, c.expMySql)
 
 		s := c.wh.String()
 
-		g.Expect(s).To(Equal(c.expString))
+		expect.String(s).Info(i).ToBe(t, c.expString)
 	}
 }
 
 func TestBuildWhereClause_Mysql_happyCases(t *testing.T) {
-	g := NewGomegaWithT(t)
-
 	for i, c := range buildWhereClauseHappyCases {
 		t.Logf("%d: %s", i, c.expMySql)
 
 		sql, args := where.Where(c.wh, dialect.Backticks, dialect.Query)
 
-		g.Expect(sql).To(Equal(c.expMySql))
-		g.Expect(args).To(Equal(c.args))
+		expect.String(sql).Info(i).ToBe(t, c.expMySql)
+		expect.Slice(args).Info(i).ToBe(t, c.args...)
 	}
 }
 
 func TestBuildWhereClause_Postgres_happyCases(t *testing.T) {
-	g := NewGomegaWithT(t)
-
 	for i, c := range buildWhereClauseHappyCases {
 		t.Logf("%d: %s", i, c.expPostgres)
 
 		sql, args := where.Where(c.wh, dialect.ANSIQuotes, dialect.Dollar)
 
-		g.Expect(sql).To(Equal(c.expPostgres))
-		g.Expect(args).To(Equal(c.args))
+		expect.String(sql).Info(i).ToBe(t, c.expPostgres)
+		expect.Slice(args).Info(i).ToBe(t, c.args...)
 	}
 }
 
 func TestBuildHavingClause_SQLServer_happyCases(t *testing.T) {
-	g := NewGomegaWithT(t)
-
 	for i, c := range buildWhereClauseHappyCases {
 		t.Logf("%d: %s", i, c.expSqlServer)
 
@@ -448,8 +440,8 @@ func TestBuildHavingClause_SQLServer_happyCases(t *testing.T) {
 		if exp != "" {
 			exp = " HAVING " + exp[7:]
 		}
-		g.Expect(sql).To(Equal(exp))
-		g.Expect(args).To(Equal(c.args))
+		expect.String(sql).Info(i).ToBe(t, exp)
+		expect.Slice(args).Info(i).ToBe(t, c.args...)
 	}
 }
 
