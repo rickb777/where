@@ -12,12 +12,6 @@ import (
 var Default = Build
 
 func Build() error {
-	if err := sh.RunV("go", "mod", "download"); err != nil {
-		return err
-	}
-	if err := sh.RunV("go", "mod", "tidy"); err != nil {
-		return err
-	}
 	if err := sh.RunV("go", "test", "./..."); err != nil {
 		return err
 	}
