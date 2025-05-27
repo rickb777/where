@@ -4,6 +4,5 @@
 _docs
 .idea/workspace.xml
 .idea/shelf/
-dot.out
 /go.work
 /go.work.sum
