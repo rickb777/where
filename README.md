@@ -1,8 +1,8 @@
 # where
 
 [![GoDoc](https://img.shields.io/badge/api-Godoc-blue.svg)](https://pkg.go.dev/github.com/rickb777/where)
-[![Build Status](https://travis-ci.org/rickb777/where.svg?branch=master)](https://travis-ci.org/rickb777/where/builds)
 [![Go Report Card](https://goreportcard.com/badge/github.com/rickb777/where)](https://goreportcard.com/report/github.com/rickb777/where)
+[![Build](https://github.com/rickb777/where/actions/workflows/go.yml/badge.svg)](https://github.com/rickb777/where/actions)
 [![Issues](https://img.shields.io/github/issues/rickb777/where.svg)](https://github.com/rickb777/where/issues)
 
 * Provides a fluent API for dynamically constructing SQL `WHERE` & `HAVING` clauses.
