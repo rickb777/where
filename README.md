@@ -25,7 +25,7 @@ Package `where` provides composable expressions for **WHERE** and **HAVING** cla
 These can range from the very simplest no-op to complex nested trees of **AND** and **OR**
 conditions.
 
-In the naive approach, strings can be concatenated to construct lists of expression that are
+In the naive approach, strings can be concatenated to construct lists of SQL expression that are
 AND-ed together. However, mixing AND with OR makes things much more difficult. So this package
 does the work for you.
 
