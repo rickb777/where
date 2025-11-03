@@ -4,12 +4,12 @@ go 1.24.1
 
 require (
 	github.com/magefile/mage v1.15.0
-	github.com/rickb777/expect v1.0.0
+	github.com/rickb777/expect v1.0.3
 )
 
 require (
 	github.com/google/go-cmp v0.7.0 // indirect
-	github.com/rickb777/plural v1.4.4 // indirect
+	github.com/rickb777/plural v1.4.6 // indirect
 )
 
 tool github.com/magefile/mage

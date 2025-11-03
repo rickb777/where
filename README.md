@@ -3,6 +3,7 @@
 [![GoDoc](https://img.shields.io/badge/api-Godoc-blue.svg)](https://pkg.go.dev/github.com/rickb777/where)
 [![Go Report Card](https://goreportcard.com/badge/github.com/rickb777/where)](https://goreportcard.com/report/github.com/rickb777/where)
 [![Build](https://github.com/rickb777/where/actions/workflows/go.yml/badge.svg)](https://github.com/rickb777/where/actions)
+[![Coverage](https://coveralls.io/repos/github/rickb777/where/badge.svg?branch=main)](https://coveralls.io/github/rickb777/where?branch=main)
 [![Issues](https://img.shields.io/github/issues/rickb777/where.svg)](https://github.com/rickb777/where/issues)
 
 * Provides a fluent API for dynamically constructing SQL `WHERE` & `HAVING` clauses.
