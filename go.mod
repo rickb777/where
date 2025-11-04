@@ -4,7 +4,7 @@ go 1.24.1
 
 require (
 	github.com/magefile/mage v1.15.0
-	github.com/rickb777/expect v1.0.3
+	github.com/rickb777/expect v1.0.5
 )
 
 require (
