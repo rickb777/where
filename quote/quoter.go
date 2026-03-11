@@ -35,22 +35,22 @@ const none = noQuoter("")
 
 var (
 	// None leaves identifiers unchanged.
-	None = none
+	None Quoter = none
 
 	// ANSI wraps identifiers in double-quote marks. For PostgreSQL etc.
-	ANSI = quoter{before: `"`, between: `"."`, after: `"`}
+	ANSI Quoter = quoter{before: `"`, between: `"."`, after: `"`}
 
 	// Backticks wraps identifies in back-ticks. For MySql etc.
-	Backticks = quoter{before: "`", between: "`.`", after: "`"}
+	Backticks Quoter = quoter{before: "`", between: "`.`", after: "`"}
 
 	// SquareBrackets wraps identifies in '[' and ']'. For MS SQL/SQL-Server.
-	SquareBrackets = quoter{before: "[", between: "].[", after: "]"}
+	SquareBrackets Quoter = quoter{before: "[", between: "].[", after: "]"}
 )
 
 var (
 	// DefaultQuoter does not change identifiers and is used by default.
 	// Change this to affect the default setting for every SQL construction function.
-	DefaultQuoter = none
+	DefaultQuoter Quoter = none
 )
 
 // Pick picks a quoter based on the names "ansi", "backtick" (aliases "backticks") or "none",
